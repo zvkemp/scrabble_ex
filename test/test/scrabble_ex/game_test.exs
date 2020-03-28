@@ -1,6 +1,6 @@
 defmodule ScrabbleEx.GameTest do
   use ExUnit.Case, async: true
-  alias ScrabbleEx.Game
+  alias ScrabbleEx.{Game, Board}
 
   setup do
     game = Game.new(players: ["zach", "kate"])
@@ -53,7 +53,12 @@ defmodule ScrabbleEx.GameTest do
   end
 
   # FIXME: check real word
-  test "first play ok", %{game: game} do
+  test "first play ok" do
+    letter_cache = ~w[
+      j o k e s x v o k e r s q z t n a l e b b
+    ]
+    game = Game.new(players: ["zach", "kate"], board: Board.new(), letter_cache: letter_cache)
+
     result =
       Game.play(game, "zach", %{
         52 => "j",

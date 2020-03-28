@@ -15,7 +15,7 @@ defmodule ScrabbleEx.Game do
       players: players,
       board: board,
       log: [],
-      letter_cache: new_letter_cache,
+      letter_cache: letter_cache,
       scores: players |> Enum.map(&{&1, []}) |> Enum.into(%{}),
       racks: players |> Enum.map(&{&1, []}) |> Enum.into(%{})
     }
@@ -71,6 +71,10 @@ defmodule ScrabbleEx.Game do
   #    - if word count is 1, letter count must be > played count
   #    - or word count > 1
 
+  defmodule Turn do
+    defstruct [:player, :letter_map]
+  end
+
   # first play, log is empty
   def play(
         game = %__MODULE__{scores: scores, log: log, players: players, board: board},
@@ -79,19 +83,26 @@ defmodule ScrabbleEx.Game do
       ) do
     letter_map = normalize_map(letter_map, board.size)
 
-    with :ok <- validate_play(letter_map, board, log) do
+    turn = %Turn{player: player, letter_map: letter_map}
+
+    with :ok <- validate_play(turn, game) do
       new_board = %Board{board | state: Map.merge(board.state, letter_map)}
 
       score = ScrabbleEx.Score.score(board, new_board)
       new_scores = Map.update(scores, player, [score], fn xs -> [score | xs] end)
+
+      # remove played letters
+      new_racks = Map.put(game.racks, player, game.racks[player] -- Map.values(letter_map))
 
       {:ok,
        %Game{
          game
          | log: [{player, letter_map} | log],
            board: new_board,
-           scores: new_scores
-       }}
+           scores: new_scores,
+           racks: new_racks
+       }
+       |> fill_racks}
     else
       {:error, message} = e -> e
     end
@@ -106,43 +117,49 @@ defmodule ScrabbleEx.Game do
     |> Enum.into(%{})
   end
 
-  defp validate_play(letter_map, board, []) do
-    validate_first_play(letter_map, board)
+  defp validate_play(%Turn{} = turn, %Game{log: []} = game) do
+    validate_first_play(turn, game)
   end
 
-  defp validate_play(letter_map, board, _log) do
-    validate_play(letter_map, board)
-  end
-
-  defp validate_first_play(letter_map, board) do
-    with :ok <- validate_crosses_center(letter_map, board.size),
-         :ok <- validate_length(letter_map, 2),
-         :ok <- validate_common(letter_map, board) do
-      :ok
-    else
-      {:error, msg} -> {:error, msg}
-    end
-  end
-
-  defp validate_play(letter_map, board) do
-    with :ok <- validate_length(letter_map, 1),
-         :ok <- validate_common(letter_map, board) do
+  defp validate_play(%Turn{} = turn, %Game{} = game) do
+    with :ok <- validate_length(turn.letter_map, 1),
+         :ok <- validate_common(turn, game) do
       :ok
     else
       {:error, msg} = e -> e
     end
   end
 
-  def validate_common(letter_map, board) do
-    with :ok <- validate_linear(letter_map, board) do
+  defp validate_first_play(%Turn{} = turn, %Game{} = game) do
+    with :ok <- validate_crosses_center(turn.letter_map, game.board.size),
+         :ok <- validate_length(turn.letter_map, 2),
+         :ok <- validate_common(turn, game) do
+      :ok
+    else
+      {:error, msg} -> {:error, msg}
+    end
+  end
+
+  defp validate_common(%Turn{} = turn, %Game{} = game) do
+    with :ok <- validate_linear(turn.letter_map, game.board),
+         :ok <- validate_player_has_tiles(turn, game) do
       :ok
     else
       {:error, _} = e -> e
     end
   end
 
-  defp validate_length(letter_map) do
-    validate_length(letter_map, 1)
+  defp validate_player_has_tiles(%Turn{} = turn, %Game{racks: racks} = game) do
+    case Map.values(turn.letter_map) -- racks[turn.player] do
+      [] ->
+        :ok
+
+      _ ->
+        {:error,
+         "player does not have the goods; tried=#{
+           Map.values(turn.letter_map) |> Enum.join() |> inspect
+         }; has=#{racks[turn.player] |> Enum.join() |> inspect}"}
+    end
   end
 
   defp validate_linear(letter_map, board) do
@@ -236,22 +253,26 @@ defmodule ScrabbleEx.Game do
     end
   end
 
-  defp fill_racks(%Game{letter_cache: lc, racks: racks} = game) do
+  defp fill_racks(%Game{players: players, letter_cache: lc, racks: racks} = game) do
     {new_racks, new_lc} =
-      Enum.reduce(racks, {racks, lc}, fn {player, rack}, {racks, lc} ->
-        count_needed = 7 - Enum.count(rack)
+      Enum.reduce(players, {racks, lc}, fn
+        player, {racks, [] = lc} ->
+          # empty, just continue
+          {racks, lc}
 
-        {
-          Map.put(racks, player, Enum.take(lc, count_needed) ++ rack),
-          Enum.drop(lc, count_needed)
-        }
+        player, {racks, lc} ->
+          count_needed = 7 - Enum.count(racks[player])
+
+          {
+            Map.put(racks, player, Enum.take(lc, count_needed) ++ racks[player]),
+            Enum.drop(lc, count_needed)
+          }
       end)
 
     %Game{
       game
       | racks: new_racks,
-        letter_cache: lc
+        letter_cache: new_lc
     }
-    |> IO.inspect()
   end
 end
