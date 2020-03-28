@@ -3,17 +3,22 @@ defmodule ScrabbleEx.Score do
 
   def score(board, new_board) do
     words_to_score = Board.word_maps(new_board) -- Board.word_maps(board)
-    words_to_score |> Enum.map(fn word ->
-      text = Board.text_for(new_board, word)
-      letter_total = word
-                     |> Enum.reduce(0, fn idx, acc ->
-                       acc + (letter_bonus(board.state[idx]) * value(new_board.state[idx]))
-                     end)
 
-      word_multiplier = word
-                        |> Enum.reduce(1, fn (idx, acc) ->
-                          acc * word_bonus(board.state[idx])
-                        end)
+    words_to_score
+    |> Enum.map(fn word ->
+      text = Board.text_for(new_board, word)
+
+      letter_total =
+        word
+        |> Enum.reduce(0, fn idx, acc ->
+          acc + letter_bonus(board.state[idx]) * value(new_board.state[idx])
+        end)
+
+      word_multiplier =
+        word
+        |> Enum.reduce(1, fn idx, acc ->
+          acc * word_bonus(board.state[idx])
+        end)
 
       {text, letter_total * word_multiplier}
     end)
