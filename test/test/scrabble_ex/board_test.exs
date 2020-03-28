@@ -30,7 +30,8 @@ defmodule ScrabbleEx.BoardTest do
     """
 
     board = Board.parse(str)
-    board = Board.new(15, board) ## FIXME: infer size
+    ## FIXME: infer size
+    board = Board.new(15, board)
     assert Board.words(board) |> sort == ["el", "jokers", "jokes", "ka", "on", "tonal"]
   end
 end
