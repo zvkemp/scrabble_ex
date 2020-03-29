@@ -54,55 +54,55 @@ defmodule ScrabbleEx.GameTest do
 
   # FIXME: check real word
   test "first play ok" do
-    letter_cache = ~w[
-      j o k e s x v o k e r s q z t n a l e b b
+    bag = ~w[
+      J O K E S X V O K E R S Q Z T N A L E B B
     ]
-    game = Game.new(players: ["zach", "kate"], board: Board.new(), letter_cache: letter_cache)
+    game = Game.new(players: ["zach", "kate"], board: Board.new(), bag: bag)
 
     result =
       Game.play(game, "zach", %{
-        52 => "j",
-        67 => "o",
-        82 => "k",
-        97 => "e",
-        112 => "s"
+        52 => "J",
+        67 => "O",
+        82 => "K",
+        97 => "E",
+        112 => "S"
       })
 
     assert {:ok, %Game{scores: scores, board: %{state: state} = board} = game} = result
     # IO.puts inspect(ScrabbleEx.Board.words(board))
-    assert %{52 => "j", 67 => "o", 82 => "k", 97 => "e", 112 => "s"} = state
-    assert %{"zach" => [[{"jokes", 48}]]} = scores
+    assert %{52 => "J", 67 => "O", 82 => "K", 97 => "E", 112 => "S"} = state
+    assert %{"zach" => [[["JOKES", 48]]]} = scores
 
     result =
       Game.play(game, "kate", %{
-        53 => "o",
-        54 => "k",
-        55 => "e",
-        56 => "r",
-        57 => "s"
+        53 => "O",
+        54 => "K",
+        55 => "E",
+        56 => "R",
+        57 => "S"
       })
 
     assert {:ok, %Game{scores: scores, board: %{state: state} = board} = game} = result
     # IO.puts inspect(ScrabbleEx.Board.words(board))
-    assert %{52 => "j", 53 => "o", 54 => "k", 55 => "e", 56 => "r", 57 => "s"} = state
-    assert %{"kate" => [[{"jokers", 34}]]} = scores
+    assert %{52 => "J", 53 => "O", 54 => "K", 55 => "E", 56 => "R", 57 => "S"} = state
+    assert %{"kate" => [[["JOKERS", 34]]]} = scores
 
     result =
       Game.play(game, "zach", %{
-        38 => "t",
-        68 => "n",
-        83 => "a",
-        98 => "l"
+        38 => "T",
+        68 => "N",
+        83 => "A",
+        98 => "L"
       })
 
     assert {:ok, %Game{scores: scores, board: %{state: state} = board} = game} = result
     # IO.puts inspect(ScrabbleEx.Board.words(board))
-    assert %{38 => "t", 53 => "o", 68 => "n", 83 => "a", 98 => "l"} = state
+    assert %{38 => "T", 53 => "O", 68 => "N", 83 => "A", 98 => "L"} = state
 
     assert %{
              "zach" => [
-               [{"el", 3}, {"ka", 6}, {"on", 2}, {"tonal", 7}],
-               [{"jokes", 48}]
+               [["EL", 3], ["KA", 6], ["ON", 2], ["TONAL", 7]],
+               [["JOKES", 48]]
              ]
            } = scores
   end

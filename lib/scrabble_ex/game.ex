@@ -1,21 +1,24 @@
 defmodule ScrabbleEx.Game do
   alias ScrabbleEx.{Game, Board}
-  defstruct [:board, :players, :log, :scores, :racks, :letter_cache]
+
+  @derive Jason.Encoder
+  defstruct [:board, :players, :log, :scores, :racks, :bag, :current_player]
 
   def new(players: players) do
     new(players: players, board: ScrabbleEx.Board.new())
   end
 
   def new(players: players, board: board) do
-    new(players: players, board: board, letter_cache: new_letter_cache)
+    new(players: players, board: board, bag: new_bag)
   end
 
-  def new(players: players, board: board, letter_cache: letter_cache) do
+  def new(players: players, board: board, bag: bag) do
     %__MODULE__{
       players: players,
+      current_player: nil,
       board: board,
       log: [],
-      letter_cache: letter_cache,
+      bag: bag,
       scores: players |> Enum.map(&{&1, []}) |> Enum.into(%{}),
       racks: players |> Enum.map(&{&1, []}) |> Enum.into(%{})
     }
@@ -23,36 +26,80 @@ defmodule ScrabbleEx.Game do
   end
 
   @char_counts %{
-    "a" => 9,
-    "b" => 2,
-    "c" => 2,
-    "d" => 4,
-    "e" => 12,
-    "f" => 2,
-    "g" => 3,
-    "h" => 2,
-    "i" => 9,
-    "j" => 1,
-    "k" => 1,
-    "l" => 4,
-    "m" => 2,
-    "n" => 6,
-    "o" => 8,
-    "p" => 2,
-    "q" => 1,
-    "r" => 6,
-    "s" => 4,
-    "t" => 6,
-    "u" => 4,
-    "v" => 2,
-    "w" => 2,
-    "x" => 1,
-    "y" => 2,
-    "z" => 1,
-    :blank => 2
+    "A" => 9,
+    "B" => 2,
+    "C" => 2,
+    "D" => 4,
+    "E" => 12,
+    "F" => 2,
+    "G" => 3,
+    "H" => 2,
+    "I" => 9,
+    "J" => 1,
+    "K" => 1,
+    "L" => 4,
+    "M" => 2,
+    "N" => 6,
+    "O" => 8,
+    "P" => 2,
+    "Q" => 1,
+    "R" => 6,
+    "S" => 4,
+    "T" => 6,
+    "U" => 4,
+    "V" => 2,
+    "W" => 2,
+    "X" => 1,
+    "Y" => 2,
+    "Z" => 1
+    # :blank => 2 # FIXME
   }
 
-  defp new_letter_cache do
+  def add_player(%Game{current_player: p}) when is_binary(p) do
+    {:error, "game already started"}
+  end
+
+  def add_player(game = %Game{}, player) do
+    # IO.inspect(game.racks)
+    with false <- Map.has_key?(game.racks, player) do
+      new_players = game.players ++ [player]
+      new_scores = game.scores |> Map.put(player, [])
+      new_racks = game.racks |> Map.put(player, [])
+
+      {:ok,
+       %Game{game | scores: new_scores, racks: new_racks, players: new_players} |> fill_racks}
+    else
+      _ -> {:error, "player already joined"}
+    end
+  end
+
+  def start(game) do
+    {:ok, next_player(game)}
+  end
+
+  def next_player(game = %Game{current_player: nil}) do
+    next_player(game, 0)
+  end
+
+  def next_player(game = %Game{}) do
+    count = game.players |> Enum.count()
+    idx = index_of_player(game.players, game.current_player)
+    next_player(game, rem(idx + 1, count))
+  end
+
+  defp index_of_player(players, player) do
+    Enum.with_index(players)
+    |> Enum.reduce(0, fn
+      {^player, idx}, acc -> idx
+      _, acc -> acc
+    end)
+  end
+
+  defp next_player(game, index) do
+    %Game{game | current_player: Enum.at(game.players, index)}
+  end
+
+  defp new_bag do
     @char_counts
     |> Enum.flat_map(fn {c, n} ->
       Stream.cycle([c]) |> Enum.take(n)
@@ -61,16 +108,14 @@ defmodule ScrabbleEx.Game do
   end
 
   # FIXME: swap turn
-  # FIXME: pass turn (toward end of game)
+  # FIXME: pass turn (toward end of game) - allowed when fewer than 7 tiles remaining in bag
   # FIXME: pass first turn?
-  # FIXME: letter cache
-  # FIXME: player racks
-  # FIXME: scoring
   # FIXME: validate connected -
   #  - this could probably be:
-  #    - if word count is 1, letter count must be > played count
+  #    - if word count is 1, letter count of words must be > played count
   #    - or word count > 1
-
+  #
+  # FIXME: track current player
   defmodule Turn do
     defstruct [:player, :letter_map]
   end
@@ -85,24 +130,23 @@ defmodule ScrabbleEx.Game do
 
     turn = %Turn{player: player, letter_map: letter_map}
 
-    with :ok <- validate_play(turn, game) do
-      new_board = %Board{board | state: Map.merge(board.state, letter_map)}
-
-      score = ScrabbleEx.Score.score(board, new_board)
+    with :ok <- validate_play(turn, game),
+         new_board <- %Board{board | state: Map.merge(board.state, letter_map)},
+         {:ok, score} <- ScrabbleEx.Score.score(board, new_board) do
       new_scores = Map.update(scores, player, [score], fn xs -> [score | xs] end)
-
       # remove played letters
       new_racks = Map.put(game.racks, player, game.racks[player] -- Map.values(letter_map))
 
       {:ok,
        %Game{
          game
-         | log: [{player, letter_map} | log],
+         | log: [[player, letter_map] | log],
            board: new_board,
            scores: new_scores,
            racks: new_racks
        }
-       |> fill_racks}
+       |> fill_racks
+       |> next_player}
     else
       {:error, message} = e -> e
     end
@@ -112,7 +156,7 @@ defmodule ScrabbleEx.Game do
     letter_map
     |> Enum.map(fn
       {{x, y}, v} -> {to_index(x, y, size), v}
-      {x, v} -> {x, v}
+      {x, v} -> {x, v |> String.upcase()}
     end)
     |> Enum.into(%{})
   end
@@ -253,7 +297,7 @@ defmodule ScrabbleEx.Game do
     end
   end
 
-  defp fill_racks(%Game{players: players, letter_cache: lc, racks: racks} = game) do
+  defp fill_racks(%Game{players: players, bag: lc, racks: racks} = game) do
     {new_racks, new_lc} =
       Enum.reduce(players, {racks, lc}, fn
         player, {racks, [] = lc} ->
@@ -272,7 +316,7 @@ defmodule ScrabbleEx.Game do
     %Game{
       game
       | racks: new_racks,
-        letter_cache: new_lc
+        bag: new_lc
     }
   end
 end

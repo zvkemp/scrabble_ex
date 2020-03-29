@@ -1,6 +1,22 @@
 defmodule ScrabbleEx.Board do
   defstruct [:state, :size]
 
+  defimpl Jason.Encoder, for: [__MODULE__] do
+    # encode map into indexed list of squares/tiles
+    def encode(struct, opts) do
+      max = struct.size * struct.size - 1
+
+      Jason.Encode.list(
+        0..max |> Enum.map(&map_term(struct.state[&1])),
+        opts
+      )
+    end
+
+    defp map_term(nil), do: %{}
+    defp map_term(a) when is_atom(a), do: %{bonus: "#{a}"}
+    defp map_term(c) when is_binary(c), do: %{character: c}
+  end
+
   def standard_str do
     "3w .  .  2l .  .  .  3w .  .  .  2l .  .  3w " <>
       ".  2w .  .  .  3l .  .  .  3l .  .  .  2w .  " <>
