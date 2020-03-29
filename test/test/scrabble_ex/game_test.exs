@@ -3,7 +3,7 @@ defmodule ScrabbleEx.GameTest do
   alias ScrabbleEx.{Game, Board}
 
   setup do
-    game = Game.new(players: ["zach", "kate"])
+    {:ok, game} = Game.new(players: ["zach", "kate"]) |> Game.start()
     %{game: game}
   end
 
@@ -57,7 +57,10 @@ defmodule ScrabbleEx.GameTest do
     bag = ~w[
       J O K E S X V O K E R S Q Z T N A L E B B
     ]
-    game = Game.new(players: ["zach", "kate"], board: Board.new(), bag: bag)
+
+    {:ok, game} =
+      Game.new(players: ["zach", "kate"], board: Board.new(), bag: bag)
+      |> Game.start()
 
     result =
       Game.play(game, "zach", %{

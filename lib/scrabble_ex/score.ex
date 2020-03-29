@@ -1,7 +1,7 @@
 defmodule ScrabbleEx.Score do
   alias ScrabbleEx.{Game, Board}
 
-  def score(board, new_board) do
+  def score(board, new_board, letter_map) do
     words_to_score = Board.word_maps(new_board) -- Board.word_maps(board)
 
     scores =
@@ -23,6 +23,13 @@ defmodule ScrabbleEx.Score do
 
         [text, letter_total * word_multiplier]
       end)
+
+    # BINGO
+    scores =
+      cond do
+        Enum.count(letter_map) == 7 -> [["*", 50] | scores]
+        true -> scores
+      end
 
     {:ok, scores}
   end

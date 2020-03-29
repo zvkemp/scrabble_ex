@@ -1,7 +1,7 @@
 defmodule ScrabbleEx.Game do
   alias ScrabbleEx.{Game, Board}
 
-  @derive Jason.Encoder
+  @derive {Jason.Encoder, only: [:board, :scores, :current_player]}
   defstruct [:board, :players, :log, :scores, :racks, :bag, :current_player]
 
   def new(players: players) do
@@ -132,7 +132,7 @@ defmodule ScrabbleEx.Game do
 
     with :ok <- validate_play(turn, game),
          new_board <- %Board{board | state: Map.merge(board.state, letter_map)},
-         {:ok, score} <- ScrabbleEx.Score.score(board, new_board) do
+         {:ok, score} <- ScrabbleEx.Score.score(board, new_board, letter_map) do
       new_scores = Map.update(scores, player, [score], fn xs -> [score | xs] end)
       # remove played letters
       new_racks = Map.put(game.racks, player, game.racks[player] -- Map.values(letter_map))
@@ -186,10 +186,18 @@ defmodule ScrabbleEx.Game do
 
   defp validate_common(%Turn{} = turn, %Game{} = game) do
     with :ok <- validate_linear(turn.letter_map, game.board),
+         :ok <- validate_player_is_current(turn, game),
          :ok <- validate_player_has_tiles(turn, game) do
       :ok
     else
       {:error, _} = e -> e
+    end
+  end
+
+  defp validate_player_is_current(turn, game) do
+    cond do
+      turn.player == game.current_player -> :ok
+      true -> {:error, "it is not #{turn.player}'s turn"}
     end
   end
 

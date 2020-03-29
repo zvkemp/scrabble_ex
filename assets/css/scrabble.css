@@ -1,0 +1,71 @@
+.board-header input {
+  width: 400px;
+}
+
+.board-container {
+  display: grid;
+  /* FIXME: use configurable board size */
+  grid-template-columns: repeat(15, 30px); 
+  grid-template-rows: repeat(15, 30px);
+  grid-gap: 1px;
+  /* max-width: 600px; */
+  border: 9px solid MistyRose;
+  padding: 4px;
+}
+
+.rack-container {
+  display: grid;
+  grid-template-columns: repeat(8, 40px);
+  grid-template-rows: repeat(1, 40px);
+  grid-gap: 2px;
+  max-width: 600px;
+  padding: 10px;
+}
+
+.rack-square, .board-square {
+  border: 1px solid beige;
+  border-radius: 2px;
+  justify-content: center;
+  align-items: center;
+  display: flex;
+  font-family: Helvetica;
+  font-weight: light;
+}
+
+.board-square {
+  background-color: floralwhite;
+}
+.board-square.triple_word {
+  background-color: IndianRed;
+}
+.board-square.double_word {
+  background-color: LightPink;
+}
+.board-square.triple_letter {
+  background-color: skyblue;
+}
+.board-square.double_letter {
+  background-color: lightcyan;
+}
+
+.board-square.tile, .rack-square.tile {
+  background-color: tan;
+  border: none;
+  border-radius: 4px;
+}
+.board-square.tile-proposed {
+  background-color: tan;
+  color: green;
+  border: none;
+}
+
+.board-square.cursor {
+  border: 2px solid red;
+  border-bottom: 3px solid green;
+}
+
+.board-square.cursor.cursor-h {
+  border: 2px solid red;
+  border-right: 3px solid green;
+}
+

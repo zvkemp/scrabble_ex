@@ -1,2 +1,16 @@
+<section class="board-header">
+</section>
 <section class="board-container">
+</section>
+<section class="rack-container">
+  <div class="rack-square tile">S</div>
+  <div class="rack-square tile">C</div>
+  <div class="rack-square tile">R</div>
+  <div class="rack-square tile">A</div>
+  <div class="rack-square tile">B</div>
+  <div class="rack-square tile">B</div>
+  <div class="rack-square tile">L</div>
+  <div class="rack-square tile">E</div>
+</section>
+<section id="submit-button-container">
 </section>
