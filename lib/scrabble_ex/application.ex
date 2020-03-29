@@ -11,9 +11,10 @@ defmodule ScrabbleEx.Application do
       # Start the Ecto repository
       ScrabbleEx.Repo,
       # Start the endpoint when the application starts
-      ScrabbleExWeb.Endpoint
+      ScrabbleExWeb.Endpoint,
       # Starts a worker by calling: ScrabbleEx.Worker.start_link(arg)
       # {ScrabbleEx.Worker, arg},
+      ScrabbleEx.Dictionary
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html

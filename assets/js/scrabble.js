@@ -11,58 +11,39 @@ class Scrabble {
   // FIXME: add a 'start' button
   // FIXME: join a specific game by id
   // FIXME: player sort rack
+  // FIXME: update 'current player' on game start
 
   // Array of points to render as circles in a line, spaced by time.
+
   //  [ {value: Number, timestamp: Number } ];
   constructor(socket) {
     window.game = this
+    this.token = select("meta[name='id-token']").attr("content");
+    this.player = select("meta[name='player']").attr("content");
+    this.game_id = select("meta[name='game-id']").attr("content");
+
     this.socket = socket
     this.cursor = -1;
     this.element = select("section.board-container");
     this.header = select("section.board-header");
     this.rack_container = select("section.rack-container");
     this.direction = 'h'; // or 'v';
-    this.player = undefined;
     this.current_player = undefined;
     this.proposed = {};
     this.scores = {};
     this.players = [];
 
-    this.drawJoinInput();
+    this.joinGameAs(this.token, this.name);
   }
 
-  drawJoinInput() {
-    if (this.player) {
-      return this.header.selectAll('div').remove();
-    }
-
-    let s = this.header;
-    let component = this;
-    let div = s
-      .append('div')
-        .attr('class', 'join-input')
-    let input = div
-      .append('input')
-        .attr('type', 'text')
-        .attr('placeholder', 'enter your name')
-    let button = div
-      .append('button')
-        .html('join')
-        .on('click', function() {
-          let name = input._groups[0][0].value
-          component.joinGameAs(name);
-        });
-  }
-
-  joinGameAs(name) {
-    this.player = name;
-    this.drawJoinInput();
+  joinGameAs(token, name) {
+    // this.player = name;
 
     // FIXME: get name from somewhere else
-    this.channel = this.socket.channel("game:default", { name: name });
+    this.channel = this.socket.channel(`game:${this.game_id}`, { token: token });
     window.channel = this.channel;
     this.channel.join()
-      .receive("ok", resp => { console.log("joined game:default", resp) })
+      .receive("ok", resp => { console.log(`joined game:${this.game_id}`, resp) })
       .receive("error", resp => { console.error("unable to join", resp) })
 
     this.channel.on("state", payload => {
@@ -75,6 +56,10 @@ class Scrabble {
 
     this.channel.on("new_proposed", payload => {
       this.handleProposed(payload);
+    });
+
+    this.channel.on("info", payload => {
+      console.info(payload);
     });
 
     this.channel.on("turn", payload => {
@@ -158,15 +143,19 @@ class Scrabble {
 
       switch (event.key) {
         case "ArrowUp": {
+          event.preventDefault();
           return component.moveByArrow(0, -1);
         }
         case "ArrowDown": {
+          event.preventDefault();
           return component.moveByArrow(0, 1);
         }
         case "ArrowLeft": {
+          event.preventDefault();
           return component.moveByArrow(-1, 0);
         }
         case "ArrowRight": {
+          event.preventDefault();
           return component.moveByArrow(1, 0);
         }
       }
@@ -261,7 +250,9 @@ class Scrabble {
   deleteProposed(cursor) {
     let d = this.proposed[cursor];
     delete this.proposed[cursor];
-    this.rack.push(d);
+    if (d) {
+      this.rack.push(d);
+    }
     this.drawRack();
     console.info(d);
     this.sendProposed();
@@ -290,6 +281,19 @@ class Scrabble {
 
   sendProposed() {
     this.channel.push("proposed", this.proposed);
+  }
+
+  clickSetCursor(i) {
+    let tile = select(`#tile-${this.cursor}`);
+    if (this.cursor === i) {
+      if (this.direction === "h") {
+        this.direction = "v"
+      } else {
+        this.direction = "h"
+      }
+    }
+
+    this.setCursor(i);
   }
 
   setCursor(i) {
@@ -333,6 +337,8 @@ class Scrabble {
     let container = this.element;
     let data = this.data;
 
+    container.classed('current', this.current_player == this.player);
+
     let squares = container.selectAll('div.board-square').data(data);
     let enterJoin = squares
       .enter()
@@ -340,7 +346,7 @@ class Scrabble {
       .attr('class', d => `board-square ${d.bonus || ''}`)
       .attr('id', (d, i) => `tile-${i}`);
 
-    enterJoin.on('click', (d, i) => this.setCursor(i))
+    enterJoin.on('click', (d, i) => this.clickSetCursor(i))
 
     let currentSquares = squares.merge(enterJoin);
     currentSquares.classed("tile", d => d.character);
@@ -397,7 +403,8 @@ class Scrabble {
     thSelection = thSelection.merge(thSelection.enter().append('th'));
     thSelection.html(function (player) {
       return `${player} (${component.totalScore(player)})`
-    });
+    }).classed('current-player', (d) => this.current_player == d)
+    .classed('is-player', (d) => this.player == d);
 
     let rowSelection = table.select('tbody').selectAll('tr').data(data);
     let row_entry = rowSelection.enter().append('tr')

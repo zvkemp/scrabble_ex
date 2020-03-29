@@ -2,17 +2,15 @@ defmodule ScrabbleExWeb.GameChannel do
   use Phoenix.Channel
   alias ScrabbleEx.Game
 
-  # FIXME: don't serialize racks with a broadcast game state;
-  # only send pushes to individual sockets.
-  # FIXME: stop including the bag
-  # FIXME: rename 'name' => 'player'
   def join("game:lobby", _message, socket) do
     {:ok, socket}
   end
 
-  def join("game:" <> game_id, %{"name" => name}, socket) do
+  def join("game:" <> game_id, %{"token" => token}, socket) do
+    # FIXME: use id to prevent name collisions
+    {:ok, {player, id}} = Phoenix.Token.verify(ScrabbleExWeb.Endpoint, "salt", token, max_age: :infinity)
     {:ok, pid} = find_or_start_game(game_id)
-    res = call(pid, {:add_player, name})
+    res = call(pid, {:add_player, player})
 
     case res do
       {:error, "game already started"} ->
@@ -25,13 +23,14 @@ defmodule ScrabbleExWeb.GameChannel do
          socket
          # FIXME: assign game pid?
          |> assign(:game_id, game_id)
-         |> assign(:name, name)}
+         |> assign(:player, player)}
     end
   end
 
   def handle_info(:after_join, socket) do
     game = call(socket, :state)
-    push(socket, "state", game)
+    broadcast!(socket, "info", %{ message: "#{socket.assigns.player} joined" })
+    broadcast!(socket, "state", game)
     push_rack(socket, game)
     {:noreply, socket}
   end
@@ -40,7 +39,7 @@ defmodule ScrabbleExWeb.GameChannel do
   # in a player's rack
   # or maybe that makes it more real?
   def handle_in("proposed", payload, socket) do
-    if call(socket, :state).current_player == socket.assigns.name do
+    if call(socket, :state).current_player == socket.assigns.player do
       nil
       # broadcast!(socket, "new_proposed", payload)
     end
@@ -58,7 +57,7 @@ defmodule ScrabbleExWeb.GameChannel do
   def handle_in("submit_payload", payload, socket) do
     payload = Enum.map(payload, fn {k, v} -> {String.to_integer(k), v} end) |> Enum.into(%{})
 
-    case call(socket, {:play, socket.assigns.name, payload}) do
+    case call(socket, {:play, socket.assigns.player, payload}) do
       {:ok, game} ->
         broadcast!(socket, "state", game)
         push_rack(socket, game)
@@ -88,7 +87,7 @@ defmodule ScrabbleExWeb.GameChannel do
   defp call(%Phoenix.Socket{} = socket, term), do: call(find_game_pid(socket), term)
 
   defp push_rack(socket, %Game{racks: racks} = game) do
-    push(socket, "rack", %{rack: game.racks[socket.assigns.name]})
+    push(socket, "rack", %{rack: game.racks[socket.assigns.player]})
   end
 
   defp push_rack(socket) do

@@ -17,6 +17,9 @@ defmodule ScrabbleExWeb.Router do
     pipe_through :browser
 
     get "/", PageController, :index
+    post "/login", LoginController, :new
+    get "/hello", PageController, :hello
+    get "/play/:id", PageController, :show
   end
 
   # Other scopes may use custom stacks.

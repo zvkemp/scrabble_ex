@@ -4,16 +4,23 @@ defmodule ScrabbleExWeb.GameChannelTest do
   alias ScrabbleEx.GameServer
   alias ScrabbleEx.Game
 
+  def rand_token do
+    :crypto.strong_rand_bytes(16)
+    |> Base.encode64
+  end
   setup do
     start_game_server()
 
+    z_token = Phoenix.Token.sign(ScrabbleExWeb.Endpoint, "salt", {"zach", rand_token()})
+    k_token = Phoenix.Token.sign(ScrabbleExWeb.Endpoint, "salt", {"kate", rand_token()})
+
     {:ok, _, zach} =
       socket(ScrabbleExWeb.UserSocket)
-      |> subscribe_and_join(GameChannel, "game:default", %{"name" => "zach"})
+      |> subscribe_and_join(GameChannel, "game:default", %{"token" => z_token})
 
     {:ok, _, kate} =
       socket(ScrabbleExWeb.UserSocket)
-      |> subscribe_and_join(GameChannel, "game:default", %{"name" => "kate"})
+      |> subscribe_and_join(GameChannel, "game:default", %{"token" => k_token})
 
     {:ok, %{zach: zach, kate: kate}}
   end
@@ -87,10 +94,16 @@ defmodule ScrabbleExWeb.GameChannelTest do
 
     assert_broadcast("state", %Game{})
     assert_broadcast("state", %Game{})
+
+    # asserting the rack message ensures state is resolved before getting
+    # game_state() here
+    assert_push("rack", %{rack: ["T", "N", "A", "L", "E", "X", "V"]})
+
     game = game_state()
     assert %Game{scores: scores} = game
     # ensure this works
     Jason.encode!(game)
+
     assert %{"zach" => [[["JOKES", 48]]]} = scores
 
     push(kate, "submit_payload", %{
@@ -103,6 +116,7 @@ defmodule ScrabbleExWeb.GameChannelTest do
 
     assert_broadcast("state", %Game{})
     assert_broadcast("state", %Game{})
+    assert_push("rack", %{rack: ["B", "B", "Q", "Z"]})
     game = game_state()
     assert %Game{scores: scores} = game
     # ensure this works
@@ -122,6 +136,7 @@ defmodule ScrabbleExWeb.GameChannelTest do
 
     assert_broadcast("state", %Game{})
     assert_broadcast("state", %Game{})
+    assert_push("rack", %{rack: ["E", "X", "V"]})
     game = game_state()
     assert %Game{scores: scores} = game
     # ensure this works

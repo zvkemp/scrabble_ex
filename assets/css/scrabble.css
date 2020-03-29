@@ -4,6 +4,7 @@
 
 .board-container {
   display: grid;
+  width: fit-content;
   /* FIXME: use configurable board size */
   grid-template-columns: repeat(15, 30px); 
   grid-template-rows: repeat(15, 30px);
@@ -11,6 +12,10 @@
   /* max-width: 600px; */
   border: 9px solid MistyRose;
   padding: 4px;
+}
+
+.board-container.current {
+  border-color: green;
 }
 
 .rack-container {
@@ -69,3 +74,10 @@
   border-right: 3px solid green;
 }
 
+th.current-player {
+  color: green;
+}
+
+th.is-player {
+  border: 1px solid gray;
+}

@@ -35,7 +35,24 @@ defmodule ScrabbleEx.Score do
           true -> scores
         end
 
-      {:ok, scores}
+      {:ok, scores} |> validate_words
+    end
+  end
+
+  defp validate_words({:ok, words_with_scores}) do
+    real_words = Enum.reduce(words_with_scores, %{}, fn ([word, _], acc) ->
+      Map.put(acc, word, ScrabbleEx.Dictionary.word?(word))
+    end)
+
+    cond do
+      real_words |> Enum.all?(fn {_, x} -> x end) -> {:ok, words_with_scores}
+      true ->
+        not_words = real_words
+                    |> Enum.filter(fn {_, x} -> !x end)
+                    |> Enum.map(fn {w, _} -> w end)
+                    |> Enum.join(", ")
+        {:error,
+          "these are not words: #{not_words}"}
     end
   end
 
