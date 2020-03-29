@@ -14,3 +14,12 @@
 </section>
 <section id="submit-button-container">
 </section>
+
+<section id="score-container">
+  <table>
+    <thead>
+    </thead>
+    <tbody>
+    </tbody>
+  </table>
+</section>

@@ -64,6 +64,13 @@ defmodule ScrabbleEx.Board do
     %__MODULE__{size: size, state: map}
   end
 
+  def merge_and_validate(board, letter_map) do
+    new_state = Map.merge(board.state, letter_map)
+    new_board = %{board | state: new_state}
+
+    {:ok, new_board}
+  end
+
   # don't use this method to compare for uniqueness, use word_maps instead
   def words(board) do
     word_maps(board)

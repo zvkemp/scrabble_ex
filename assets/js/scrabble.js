@@ -10,6 +10,7 @@ class Scrabble {
   // FIXME: show scoring
   // FIXME: add a 'start' button
   // FIXME: join a specific game by id
+  // FIXME: player sort rack
 
   // Array of points to render as circles in a line, spaced by time.
   //  [ {value: Number, timestamp: Number } ];
@@ -24,6 +25,8 @@ class Scrabble {
     this.player = undefined;
     this.current_player = undefined;
     this.proposed = {};
+    this.scores = {};
+    this.players = [];
 
     this.drawJoinInput();
   }
@@ -108,7 +111,6 @@ class Scrabble {
   }
 
   handleGameState(payload) {
-    // debugger;
     if (payload.current_player) {
       this.current_player = payload.current_player // FIXME: where does this logic belong?
     }
@@ -122,7 +124,11 @@ class Scrabble {
       (payload.scores[this.player][0] || []).join(" ")
     );
 
+    this.scores = payload.scores;
+    this.players = payload.players;
+
     this.drawSquares();
+    this.drawScores();
   }
 
   handleRack(payload) {
@@ -362,6 +368,60 @@ class Scrabble {
       .attr('class', 'submit-button')
       .html('SUBMIT')
       .on("click", () => { this.submitProposed() });
+  }
+
+  drawScores() {
+    // FIXME: this is a mess
+    let scoreCount = 0;
+    for (let player in this.scores) {
+      scoreCount = Math.max(this.scores[player].length, scoreCount);
+    }
+
+    // count of all rows needed
+    let data = [];
+    for (let i = 0; i < scoreCount; i++) {
+      data.push(i);
+    }
+
+    let component = this;
+    let scores = this.scores;
+    let players = this.players;
+
+    let table = select('#score-container table');
+    let headerSelection = table.select('thead').selectAll('tr').data([0]);
+    let headEnter = headerSelection.enter()
+      .append('tr').attr('id', 'score-header')
+
+    headerSelection = headerSelection.merge(headEnter);
+    let thSelection = headerSelection.selectAll('th').data(players);
+    thSelection = thSelection.merge(thSelection.enter().append('th'));
+    thSelection.html(function (player) {
+      return `${player} (${component.totalScore(player)})`
+    });
+
+    let rowSelection = table.select('tbody').selectAll('tr').data(data);
+    let row_entry = rowSelection.enter().append('tr')
+    let rows = rowSelection.merge(row_entry);
+    rows.each(function(d) {
+      let cells = select(this).selectAll('td').data(players)
+      let cell_entry = cells.enter().append('td');
+      cells = cells.merge(cell_entry);
+
+      cells.html(function (p) {
+        return (scores[p][d] || []).join(' ')
+      });
+    })
+  }
+
+  totalScore(player) {
+    let sum = 0;
+    this.scores[player].forEach(turn => {
+      turn.forEach(word => {
+        sum += word[1]
+      })
+    })
+
+    return sum;
   }
 }
 

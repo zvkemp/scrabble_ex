@@ -1,37 +1,42 @@
 defmodule ScrabbleEx.Score do
   alias ScrabbleEx.{Game, Board}
 
-  def score(board, new_board, letter_map) do
+  def score(board, new_board, letter_map, first_turn \\ false) do
     words_to_score = Board.word_maps(new_board) -- Board.word_maps(board)
 
-    scores =
-      words_to_score
-      |> Enum.map(fn word ->
-        text = Board.text_for(new_board, word)
+    # if there's only 1 word, it must be longer than the letters played (validate connected)
+    if !first_turn && Enum.count(words_to_score) == 1 && (Enum.at(words_to_score, 0) |> Enum.count) <= Enum.count(letter_map) do
+      {:error, "word is not connected"}
+    else
+      scores =
+        words_to_score
+        |> Enum.map(fn word ->
+          text = Board.text_for(new_board, word)
 
-        letter_total =
-          word
-          |> Enum.reduce(0, fn idx, acc ->
-            acc + letter_bonus(board.state[idx]) * value(new_board.state[idx])
-          end)
+          letter_total =
+            word
+            |> Enum.reduce(0, fn idx, acc ->
+              acc + letter_bonus(board.state[idx]) * value(new_board.state[idx])
+            end)
 
-        word_multiplier =
-          word
-          |> Enum.reduce(1, fn idx, acc ->
-            acc * word_bonus(board.state[idx])
-          end)
+          word_multiplier =
+            word
+            |> Enum.reduce(1, fn idx, acc ->
+              acc * word_bonus(board.state[idx])
+            end)
 
-        [text, letter_total * word_multiplier]
-      end)
+          [text, letter_total * word_multiplier]
+        end)
 
-    # BINGO
-    scores =
-      cond do
-        Enum.count(letter_map) == 7 -> [["*", 50] | scores]
-        true -> scores
-      end
+      # BINGO
+      scores =
+        cond do
+          Enum.count(letter_map) == 7 -> [["*", 50] | scores]
+          true -> scores
+        end
 
-    {:ok, scores}
+      {:ok, scores}
+    end
   end
 
   defp letter_bonus(:double_letter), do: 2

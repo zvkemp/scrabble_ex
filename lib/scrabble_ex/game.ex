@@ -1,7 +1,12 @@
 defmodule ScrabbleEx.Game do
+  # FIXME: swap turn
+  # FIXME: pass turn (toward end of game) - allowed when fewer than 7 tiles remaining in bag
+  # FIXME: handle game over
+  #
+
   alias ScrabbleEx.{Game, Board}
 
-  @derive {Jason.Encoder, only: [:board, :scores, :current_player]}
+  @derive {Jason.Encoder, only: [:board, :scores, :current_player, :players]}
   defstruct [:board, :players, :log, :scores, :racks, :bag, :current_player]
 
   def new(players: players) do
@@ -59,16 +64,15 @@ defmodule ScrabbleEx.Game do
     {:error, "game already started"}
   end
 
-  def add_player(game = %Game{}, player) do
-    # IO.inspect(game.racks)
-    with false <- Map.has_key?(game.racks, player) do
-      new_players = game.players ++ [player]
-      new_scores = game.scores |> Map.put(player, [])
-      new_racks = game.racks |> Map.put(player, [])
+  def add_player(%Game{} = game, player) do
+    case Map.has_key?(game.racks, player) do
+      false ->
+        new_players = game.players ++ [player]
+        new_scores = game.scores |> Map.put(player, [])
+        new_racks = game.racks |> Map.put(player, [])
 
-      {:ok,
-       %Game{game | scores: new_scores, racks: new_racks, players: new_players} |> fill_racks}
-    else
+        {:ok,
+         %Game{game | scores: new_scores, racks: new_racks, players: new_players} |> fill_racks}
       _ -> {:error, "player already joined"}
     end
   end
@@ -77,11 +81,11 @@ defmodule ScrabbleEx.Game do
     {:ok, next_player(game)}
   end
 
-  def next_player(game = %Game{current_player: nil}) do
+  def next_player(%Game{current_player: nil} = game) do
     next_player(game, 0)
   end
 
-  def next_player(game = %Game{}) do
+  def next_player(%Game{} = game) do
     count = game.players |> Enum.count()
     idx = index_of_player(game.players, game.current_player)
     next_player(game, rem(idx + 1, count))
@@ -107,32 +111,22 @@ defmodule ScrabbleEx.Game do
     |> Enum.shuffle()
   end
 
-  # FIXME: swap turn
-  # FIXME: pass turn (toward end of game) - allowed when fewer than 7 tiles remaining in bag
-  # FIXME: pass first turn?
-  # FIXME: validate connected -
-  #  - this could probably be:
-  #    - if word count is 1, letter count of words must be > played count
-  #    - or word count > 1
-  #
-  # FIXME: track current player
   defmodule Turn do
     defstruct [:player, :letter_map]
   end
 
-  # first play, log is empty
   def play(
-        game = %__MODULE__{scores: scores, log: log, players: players, board: board},
+        %__MODULE__{scores: scores, log: log, players: players, board: board} = game,
         player,
         letter_map
       ) do
     letter_map = normalize_map(letter_map, board.size)
-
+    first_turn = Enum.empty?(log)
     turn = %Turn{player: player, letter_map: letter_map}
 
     with :ok <- validate_play(turn, game),
-         new_board <- %Board{board | state: Map.merge(board.state, letter_map)},
-         {:ok, score} <- ScrabbleEx.Score.score(board, new_board, letter_map) do
+         {:ok, new_board} <- Board.merge_and_validate(board, letter_map),
+         {:ok, score} <- ScrabbleEx.Score.score(board, new_board, letter_map, first_turn) do
       new_scores = Map.update(scores, player, [score], fn xs -> [score | xs] end)
       # remove played letters
       new_racks = Map.put(game.racks, player, game.racks[player] -- Map.values(letter_map))
@@ -291,7 +285,7 @@ defmodule ScrabbleEx.Game do
 
   defp validate_length(letter_map, min) do
     cond do
-      letter_map |> Enum.count() > 1 -> :ok
+      letter_map |> Enum.count() >= min -> :ok
       true -> {:error, "not long enough"}
     end
   end
@@ -308,7 +302,7 @@ defmodule ScrabbleEx.Game do
   defp fill_racks(%Game{players: players, bag: lc, racks: racks} = game) do
     {new_racks, new_lc} =
       Enum.reduce(players, {racks, lc}, fn
-        player, {racks, [] = lc} ->
+        _player, {racks, [] = lc} ->
           # empty, just continue
           {racks, lc}
 
