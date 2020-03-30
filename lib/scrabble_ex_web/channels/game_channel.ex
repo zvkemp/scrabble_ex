@@ -88,7 +88,7 @@ defmodule ScrabbleExWeb.GameChannel do
   defp find_or_start_game(id) do
     # FIXME: I think start_link causes this to close
     # on duplicate joins (Phoenix closes the existing channel for new join)
-    case ScrabbleEx.GameServer.start(name: {:global, "game:#{id}"}) do
+    case ScrabbleEx.GameServer.start(id, name: {:global, "game:#{id}"}) do
       {:ok, pid} -> {:ok, pid}
       {:error, {:already_started, pid}} -> {:ok, pid}
     end

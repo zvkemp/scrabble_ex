@@ -20,24 +20,52 @@ defmodule ScrabbleEx.Board do
 
   def standard_str do
     "3w .  .  2l .  .  .  3w .  .  .  2l .  .  3w " <>
-      ".  2w .  .  .  3l .  .  .  3l .  .  .  2w .  " <>
-      ".  .  2w .  .  .  2l .  2l .  .  .  2w .  .  " <>
-      "2l .  .  2w .  .  .  2l .  .  .  2w .  .  2l " <>
-      ".  .  .  .  2w .  .  .  .  .  2w .  .  .  .  " <>
-      ".  3l .  .  .  3l .  .  .  3l .  .  .  3l .  " <>
-      ".  .  2l .  .  .  2l .  2l .  .  .  2l .  .  " <>
-      "3w .  .  2l .  .  .  2w .  .  .  2l .  .  3w " <>
-      ".  .  2l .  .  .  2l .  2l .  .  .  2l .  .  " <>
-      ".  3l .  .  .  3l .  .  .  3l .  .  .  3l .  " <>
-      ".  .  .  .  2w .  .  .  .  .  2w .  .  .  .  " <>
-      "2l .  .  2w .  .  .  2l .  .  .  2w .  .  2l " <>
-      ".  .  2w .  .  .  2l .  2l .  .  .  2w .  .  " <>
-      ".  2w .  .  .  3l .  .  .  3l .  .  .  2w .  " <>
-      "3w .  .  2l .  .  .  3w .  .  .  2l .  .  3w"
+    ".  2w .  .  .  3l .  .  .  3l .  .  .  2w .  " <>
+    ".  .  2w .  .  .  2l .  2l .  .  .  2w .  .  " <>
+    "2l .  .  2w .  .  .  2l .  .  .  2w .  .  2l " <>
+    ".  .  .  .  2w .  .  .  .  .  2w .  .  .  .  " <>
+    ".  3l .  .  .  3l .  .  .  3l .  .  .  3l .  " <>
+    ".  .  2l .  .  .  2l .  2l .  .  .  2l .  .  " <>
+    "3w .  .  2l .  .  .  2w .  .  .  2l .  .  3w " <>
+    ".  .  2l .  .  .  2l .  2l .  .  .  2l .  .  " <>
+    ".  3l .  .  .  3l .  .  .  3l .  .  .  3l .  " <>
+    ".  .  .  .  2w .  .  .  .  .  2w .  .  .  .  " <>
+    "2l .  .  2w .  .  .  2l .  .  .  2w .  .  2l " <>
+    ".  .  2w .  .  .  2l .  2l .  .  .  2w .  .  " <>
+    ".  2w .  .  .  3l .  .  .  3l .  .  .  2w .  " <>
+    "3w .  .  2l .  .  .  3w .  .  .  2l .  .  3w"
+  end
+
+  def super_str do
+    "4w .  .  2l .  .  .  3w .  .  2l .  .  3w .  .  .  2l .  .  4w " <>
+    ".  2w .  . 3l  .  .  .  2w .  .  .  2w .  .  .  3l .  .  2w . " <>
+    ".  .  2w .  .  4l .  .  .  2w .  2w .  .  .  4l .  .  2l .  . " <>
+    "2l .  .  3w .  .  2l .  .  .  3w .  .  .  2l .  .  3w .  .  2l " <>
+    ".  3l .  .  2w .  .  .  3l .  .  .  3l .  .  .  2w .  .  3l . " <>
+    ".  .  4l .  .  2w .  .  .  2l .  2l .  .  .  2w .  .  4l .  . " <>
+    ".  .  .  2l .  .  2w .  .  .  2l .  .  .  2w .  .  2l .  .  . " <>
+    "3w .  .  .  .  .  .  2w .  .  .  .  .  2w .  .  .  .  .  .  3w " <>
+    ".  2w .  .  3l .  .  .  3l .  .  .  3l .  .  .  3l .  .  2w . " <>
+    ".  .  2w .  .  2l .  .  .  2l .  2l .  .  .  2l .  .  2w .  . " <>
+    "2l .  .  3w .  .  2l .  .  .  2w .  .  .  2l .  .  3w .  .  2l " <>
+    ".  .  2w .  .  2l .  .  .  2l .  2l .  .  .  2l .  .  2w .  . " <>
+    ".  2w .  .  3l .  .  .  3l .  .  .  3l .  .  .  3l .  .  2w . " <>
+    "3w .  .  .  .  .  .  2w .  .  .  .  .  2w .  .  .  .  .  .  3w " <>
+    ".  .  .  2l .  .  2w .  .  .  2l .  .  .  2w .  .  2l .  .  . " <>
+    ".  .  4l .  .  2w .  .  .  2l .  2l .  .  .  2w .  .  4l .  . " <>
+    ".  3l .  .  2w .  .  .  3l .  .  .  3l .  .  .  2w .  .  3l . " <>
+    "2l .  .  3w .  .  2l .  .  .  3w .  .  .  2l .  .  3w .  .  2l " <>
+    ".  .  2w .  .  4l .  .  .  2w .  2w .  .  .  4l .  .  2l .  . " <>
+    ".  2w .  . 3l  .  .  .  2w .  .  .  2w .  .  .  3l .  .  2w . " <>
+    "4w .  .  2l .  .  .  3w .  .  2l .  .  3w .  .  .  2l .  .  4w "
   end
 
   def standard do
     parse(standard_str)
+  end
+
+  def parsed_super do
+    parse(super_str)
   end
 
   def parse(str) do
@@ -51,8 +79,12 @@ defmodule ScrabbleEx.Board do
 
   defp parse_fragment("2l"), do: :double_letter
   defp parse_fragment("3l"), do: :triple_letter
+  defp parse_fragment("4l"), do: :quad_letter
+
   defp parse_fragment("2w"), do: :double_word
   defp parse_fragment("3w"), do: :triple_word
+  defp parse_fragment("4w"), do: :quad_word
+
   defp parse_fragment("."), do: nil
   # FIXME: match on length
   defp parse_fragment(f), do: f
@@ -63,6 +95,10 @@ defmodule ScrabbleEx.Board do
 
   def new(size, map) do
     %__MODULE__{size: size, state: map}
+  end
+
+  def super_new() do
+    new(21, parsed_super)
   end
 
   def merge_and_validate(board, letter_map) do

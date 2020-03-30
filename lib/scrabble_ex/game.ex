@@ -9,12 +9,20 @@ defmodule ScrabbleEx.Game do
   @derive {Jason.Encoder, only: [:board, :scores, :current_player, :players]}
   defstruct [:board, :players, :log, :scores, :racks, :bag, :current_player]
 
+  def new("super:" <> id, players: players) do
+    new(players: players, board: ScrabbleEx.Board.super_new(), bag: new_super_bag())
+  end
+
+  def new(_id, players: players) do
+    new(players: players)
+  end
+
   def new(players: players) do
     new(players: players, board: ScrabbleEx.Board.new())
   end
 
   def new(players: players, board: board) do
-    new(players: players, board: board, bag: new_bag)
+    new(players: players, board: board, bag: new_bag())
   end
 
   def new(players: players, board: board, bag: bag) do
@@ -58,6 +66,36 @@ defmodule ScrabbleEx.Game do
     "Y" => 2,
     "Z" => 1,
     "BLANK" => 2
+  }
+
+  @super_counts %{
+    "A" => 16,
+    "B" => 4,
+    "C" => 6,
+    "D" => 8,
+    "E" => 24,
+    "F" => 4,
+    "G" => 5,
+    "H" => 5,
+    "I" => 13,
+    "J" => 2,
+    "K" => 2,
+    "L" => 7,
+    "M" => 6,
+    "N" => 13,
+    "O" => 15,
+    "P" => 4,
+    "Q" => 2,
+    "R" => 13,
+    "S" => 10,
+    "T" => 15,
+    "U" => 7,
+    "V" => 3,
+    "W" => 4,
+    "X" => 2,
+    "Y" => 4,
+    "Z" => 2,
+    "BLANK" => 4,
   }
 
   def add_player(%Game{current_player: p}) when is_binary(p) do
@@ -110,7 +148,15 @@ defmodule ScrabbleEx.Game do
   end
 
   defp new_bag do
-    @char_counts
+    new_bag(@char_counts)
+  end
+
+  defp new_super_bag do
+    new_bag(@super_counts)
+  end
+
+  defp new_bag(counts) do
+    counts
     |> Enum.flat_map(fn {c, n} ->
       Stream.cycle([c]) |> Enum.take(n)
     end)

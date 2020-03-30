@@ -10,12 +10,12 @@ defmodule ScrabbleEx.GameServer do
     GenServer.call({:global, "game:#{name}"}, :state)
   end
 
-  def start(opts) do
-    GenServer.start(__MODULE__, :ok, opts)
+  def start(id, opts) do
+    GenServer.start(__MODULE__, id, opts)
   end
 
-  def init(:ok) do
-    {:ok, Game.new(players: [])}
+  def init(id) do
+    {:ok, Game.new(id, players: [])}
   end
 
   # for test

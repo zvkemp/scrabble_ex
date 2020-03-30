@@ -14,6 +14,11 @@
   padding: 4px;
 }
 
+.board-container.super {
+  grid-template-columns: repeat(21, 30px); 
+  grid-template-rows: repeat(21, 30px);
+}
+
 .board-container.current {
   border-color: green;
 }
@@ -40,11 +45,17 @@
 .board-square {
   background-color: floralwhite;
 }
+.board-square.quad_word {
+  background-color: Chocolate;
+}
 .board-square.triple_word {
   background-color: IndianRed;
 }
 .board-square.double_word {
   background-color: LightPink;
+}
+.board-square.quad_letter {
+  background-color: darkcyan;
 }
 .board-square.triple_letter {
   background-color: skyblue;

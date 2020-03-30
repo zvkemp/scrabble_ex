@@ -19,6 +19,7 @@ class Scrabble {
 
     this.socket = socket
     this.cursor = -1;
+    this.size = 15;
     this.element = select("section.board-container");
     this.header = select("section.board-header");
     this.rack_container = select("section.rack-container");
@@ -232,15 +233,15 @@ class Scrabble {
   }
 
   setCursorXY(x, y) {
-    this.setCursor((15 * y) + x);
+    this.setCursor((this.size * y) + x);
   }
 
   cursorX() {
-    return this.cursor % 15;
+    return this.cursor % this.size;
   }
 
   cursorY() {
-    return Math.floor(this.cursor / 15);
+    return Math.floor(this.cursor / this.size);
   }
 
   setProposed(char) {
@@ -370,6 +371,11 @@ class Scrabble {
     let data = this.data;
 
     container.classed('current', this.current_player == this.player);
+
+    if (data.length === 441) {
+      this.size = 21; // FIXME: better way to set this once
+      container.classed('super', true)
+    }
 
     let squares = container.selectAll('div.board-square').data(data);
     let enterJoin = squares
