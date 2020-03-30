@@ -50,8 +50,11 @@ defmodule ScrabbleExWeb.GameChannel do
   end
 
   def handle_in("start", _payload, socket) do
-    {:ok, player} = call(socket, :start_game)
-    broadcast!(socket, "turn", %{player: player})
+    case call(socket, :start_game) do
+      {:ok, game} -> broadcast!(socket, "state", game)
+      {:error, msg} -> push(socket, "error", %{reason: msg})
+    end
+
     {:noreply, socket}
   end
 

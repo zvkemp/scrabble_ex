@@ -79,8 +79,12 @@ defmodule ScrabbleEx.Game do
     end
   end
 
-  def start(game) do
+  def start(%Game{ current_player: nil } = game) do
     {:ok, next_player(game)}
+  end
+
+  def start(game) do
+    {:error, "game already started"}
   end
 
   def next_player(%Game{current_player: nil} = game) do

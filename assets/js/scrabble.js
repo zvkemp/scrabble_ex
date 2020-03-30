@@ -6,12 +6,7 @@ import { transition } from 'd3-transition'
 import { easeCubicInOut } from 'd3-ease'
 
 class Scrabble {
-  // FIXME: add player scores
-  // FIXME: show scoring
-  // FIXME: add a 'start' button
-  // FIXME: join a specific game by id
   // FIXME: player sort rack
-  // FIXME: update 'current player' on game start
 
   // Array of points to render as circles in a line, spaced by time.
 
@@ -114,6 +109,7 @@ class Scrabble {
 
     this.drawSquares();
     this.drawScores();
+    this.drawStartButton();
   }
 
   handleRack(payload) {
@@ -463,6 +459,24 @@ class Scrabble {
     })
 
     return sum;
+  }
+
+  drawStartButton() {
+    let data = [];
+    if (!this.current_player) {
+      data.push(0);
+    }
+
+    let selection = this.header.selectAll('button').data(data);
+    let channel = this.channel
+
+    selection.enter()
+      .append('button')
+      .attr('class', 'start-button')
+      .html("click here to start")
+      .on("click", () => { channel.push("start") });
+
+    selection.exit().remove();
   }
 }
 

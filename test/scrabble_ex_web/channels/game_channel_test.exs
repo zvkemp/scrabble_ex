@@ -68,7 +68,7 @@ defmodule ScrabbleExWeb.GameChannelTest do
     assert %Game{current_player: nil} = game_state()
 
     push(zach, "start")
-    assert_broadcast("turn", %{player: "zach"})
+    assert_broadcast("state", %Game{})
     assert %Game{current_player: "zach"} = game_state()
   end
 
@@ -83,7 +83,8 @@ defmodule ScrabbleExWeb.GameChannelTest do
 
     push(kate, "start")
 
-    assert_broadcast("turn", %{player: "zach"})
+    assert_broadcast("state", %Game{current_player: nil})
+    assert_broadcast("state", %Game{current_player: "zach"})
 
     push(zach, "submit_payload", %{
       "52" => "J",
