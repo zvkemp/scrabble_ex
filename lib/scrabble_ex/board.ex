@@ -14,6 +14,7 @@ defmodule ScrabbleEx.Board do
 
     defp map_term(nil), do: %{}
     defp map_term(a) when is_atom(a), do: %{bonus: "#{a}"}
+    defp map_term(":" <> c), do: %{character: c}
     defp map_term(c) when is_binary(c), do: %{character: c}
   end
 
@@ -82,6 +83,10 @@ defmodule ScrabbleEx.Board do
   def text_for(board, word_map) do
     word_map
     |> Enum.map(&board.state[&1])
+    |> Enum.map(fn
+      ":" <> c -> c
+      c -> c
+    end)
     |> Enum.join()
   end
 

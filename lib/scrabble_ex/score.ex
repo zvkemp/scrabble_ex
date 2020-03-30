@@ -95,4 +95,5 @@ defmodule ScrabbleEx.Score do
   defp value("X"), do: 8
   defp value("Y"), do: 4
   defp value("Z"), do: 10
+  defp value(":" <> _c), do: 0
 end

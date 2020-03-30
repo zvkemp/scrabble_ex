@@ -56,8 +56,8 @@ defmodule ScrabbleEx.Game do
     "W" => 2,
     "X" => 1,
     "Y" => 2,
-    "Z" => 1
-    # :blank => 2 # FIXME
+    "Z" => 1,
+    "BLANK" => 2 # FIXME
   }
 
   def add_player(%Game{current_player: p}) when is_binary(p) do
@@ -152,9 +152,13 @@ defmodule ScrabbleEx.Game do
     letter_map
     |> Enum.map(fn
       {{x, y}, v} -> {to_index(x, y, size), v}
-      {x, v} -> {x, v |> String.upcase()}
+      {x, v} -> {x, v |> upcase()}
     end)
     |> Enum.into(%{})
+  end
+
+  defp upcase(c) do
+    String.upcase(c)
   end
 
   defp validate_play(%Turn{} = turn, %Game{log: []} = game) do
@@ -198,17 +202,21 @@ defmodule ScrabbleEx.Game do
   end
 
   defp validate_player_has_tiles(%Turn{} = turn, %Game{racks: racks} = game) do
-    case Map.values(turn.letter_map) -- racks[turn.player] do
+    case (Map.values(turn.letter_map) |> Enum.map(&normalize_blank/1)) -- racks[turn.player] do
       [] ->
         :ok
 
       _ ->
         {:error,
          "player does not have the goods; tried=#{
-           Map.values(turn.letter_map) |> Enum.join() |> inspect
-         }; has=#{racks[turn.player] |> Enum.join() |> inspect}"}
+           Map.values(turn.letter_map) |> Enum.map(&normalize_blank/1) |> Enum.join(" ") |> inspect
+         }; has=#{racks[turn.player] |> Enum.join(" ") |> inspect}"}
     end
   end
+
+  # for rack comparison
+  defp normalize_blank(":" <> _c), do: "BLANK"
+  defp normalize_blank(c), do: c
 
   defp validate_linear(letter_map, board) do
     case direction(letter_map, board) do

@@ -52,7 +52,29 @@ defmodule ScrabbleEx.GameTest do
     assert {:error, "word is not continuous"} = result
   end
 
-  # FIXME: check real word
+  test "first play with blanks" do
+    bag = ~w[
+      BLANK BLANK O E S X V O K E R S Q Z T N A L E B B
+    ]
+
+    {:ok, game} =
+      Game.new(players: ["zach", "kate"], board: Board.new(), bag: bag)
+      |> Game.start()
+
+    result =
+      Game.play(game, "zach", %{
+        52 => ":J",
+        67 => "O",
+        82 => ":K",
+        97 => "E",
+        112 => "S"
+      })
+
+    assert {:ok, %Game{scores: scores, board: %{state: state} = board} = game} = result
+    assert %{52 => ":J", 67 => "O", 82 => ":K", 97 => "E", 112 => "S"} = state
+    assert %{"zach" => [[["JOKES", 6]]]} = scores
+  end
+
   test "first play ok" do
     bag = ~w[
       J O K E S X V O K E R S Q Z T N A L E B B
