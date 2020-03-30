@@ -73,7 +73,9 @@ defmodule ScrabbleEx.Game do
 
         {:ok,
          %Game{game | scores: new_scores, racks: new_racks, players: new_players} |> fill_racks}
-      _ -> {:error, "player already joined"}
+
+      _ ->
+        {:error, "player already joined"}
     end
   end
 

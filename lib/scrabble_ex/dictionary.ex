@@ -8,7 +8,7 @@ defmodule ScrabbleEx.Dictionary do
   def init(:ok) do
     path = Path.expand("./priv/dictionary.json")
     {:ok, text} = File.read(path)
-    state = Jason.decode!(text) |> Enum.into(MapSet.new)
+    state = Jason.decode!(text) |> Enum.into(MapSet.new())
     {:ok, state}
   end
 

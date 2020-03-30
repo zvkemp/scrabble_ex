@@ -8,7 +8,9 @@ defmodule ScrabbleExWeb.GameChannel do
 
   def join("game:" <> game_id, %{"token" => token}, socket) do
     # FIXME: use id to prevent name collisions
-    {:ok, {player, id}} = Phoenix.Token.verify(ScrabbleExWeb.Endpoint, "salt", token, max_age: :infinity)
+    {:ok, {player, id}} =
+      Phoenix.Token.verify(ScrabbleExWeb.Endpoint, "salt", token, max_age: :infinity)
+
     {:ok, pid} = find_or_start_game(game_id)
     res = call(pid, {:add_player, player})
 
@@ -29,7 +31,7 @@ defmodule ScrabbleExWeb.GameChannel do
 
   def handle_info(:after_join, socket) do
     game = call(socket, :state)
-    broadcast!(socket, "info", %{ message: "#{socket.assigns.player} joined" })
+    broadcast!(socket, "info", %{message: "#{socket.assigns.player} joined"})
     broadcast!(socket, "state", game)
     push_rack(socket, game)
     {:noreply, socket}

@@ -6,8 +6,9 @@ defmodule ScrabbleExWeb.GameChannelTest do
 
   def rand_token do
     :crypto.strong_rand_bytes(16)
-    |> Base.encode64
+    |> Base.encode64()
   end
+
   setup do
     start_game_server()
 

@@ -5,7 +5,8 @@ defmodule ScrabbleEx.Score do
     words_to_score = Board.word_maps(new_board) -- Board.word_maps(board)
 
     # if there's only 1 word, it must be longer than the letters played (validate connected)
-    if !first_turn && Enum.count(words_to_score) == 1 && (Enum.at(words_to_score, 0) |> Enum.count) <= Enum.count(letter_map) do
+    if !first_turn && Enum.count(words_to_score) == 1 &&
+         Enum.at(words_to_score, 0) |> Enum.count() <= Enum.count(letter_map) do
       {:error, "word is not connected"}
     else
       scores =
@@ -40,19 +41,23 @@ defmodule ScrabbleEx.Score do
   end
 
   defp validate_words({:ok, words_with_scores}) do
-    real_words = Enum.reduce(words_with_scores, %{}, fn ([word, _], acc) ->
-      Map.put(acc, word, ScrabbleEx.Dictionary.word?(word))
-    end)
+    real_words =
+      Enum.reduce(words_with_scores, %{}, fn [word, _], acc ->
+        Map.put(acc, word, ScrabbleEx.Dictionary.word?(word))
+      end)
 
     cond do
-      real_words |> Enum.all?(fn {_, x} -> x end) -> {:ok, words_with_scores}
+      real_words |> Enum.all?(fn {_, x} -> x end) ->
+        {:ok, words_with_scores}
+
       true ->
-        not_words = real_words
-                    |> Enum.filter(fn {_, x} -> !x end)
-                    |> Enum.map(fn {w, _} -> w end)
-                    |> Enum.join(", ")
-        {:error,
-          "these are not words: #{not_words}"}
+        not_words =
+          real_words
+          |> Enum.filter(fn {_, x} -> !x end)
+          |> Enum.map(fn {w, _} -> w end)
+          |> Enum.join(", ")
+
+        {:error, "these are not words: #{not_words}"}
     end
   end
 
