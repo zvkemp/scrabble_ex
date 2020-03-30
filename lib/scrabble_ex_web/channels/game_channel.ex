@@ -58,6 +58,17 @@ defmodule ScrabbleExWeb.GameChannel do
     {:noreply, socket}
   end
 
+  def handle_in("swap", payload, socket) when is_binary(payload) do
+    case call(socket, {:swap, socket.assigns.player, payload}) do
+      {:ok, game} ->
+        push_rack(socket, game)
+        broadcast!(socket, "state", game)
+      {:error, msg} = e ->
+        push(socket, "error", %{reason: msg})
+    end
+    {:noreply, socket}
+  end
+
   # FIXME: rename "submit_payload" => "play"
   def handle_in("submit_payload", payload, socket) do
     payload = Enum.map(payload, fn {k, v} -> {String.to_integer(k), v} end) |> Enum.into(%{})

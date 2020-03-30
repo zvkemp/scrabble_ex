@@ -57,7 +57,7 @@ defmodule ScrabbleEx.Game do
     "X" => 1,
     "Y" => 2,
     "Z" => 1,
-    "BLANK" => 20 # FIXME
+    "BLANK" => 2
   }
 
   def add_player(%Game{current_player: p}) when is_binary(p) do
@@ -149,6 +149,41 @@ defmodule ScrabbleEx.Game do
        |> next_player}
     else
       {:error, message} = e -> e
+    end
+  end
+
+  def swap(%Game{} = game, player, str) do
+    swapped = str |> String.upcase |> String.split(~r/\s+/, trim: true)
+    with :ok <- validate_swap(game, player, swapped),
+         :ok <- validate_swappability(game) do
+      count = swapped |> Enum.count
+      new_tiles = game.bag |> Enum.take(count)
+      new_rack = (game.racks[player] -- swapped) ++ new_tiles
+
+      new_bag = (Enum.drop(game.bag, count) ++ swapped) |> Enum.shuffle
+      new_racks = Map.put(game.racks, player, new_rack)
+
+      new_game = %Game{game | bag: new_bag, racks: new_racks } |> next_player
+
+      {:ok, new_game}
+    else
+      {:error, msg} = e -> e
+    end
+  end
+
+  defp validate_swappability(%Game{bag: bag}) do
+    if Enum.count(bag) >= 7 do
+      :ok
+    else
+      {:error, "not enough tiles left in bag"}
+    end
+  end
+
+  defp validate_swap(game, player, data) do
+    diff = data -- game.racks[player]
+    case diff do
+      [] -> :ok
+      _ -> {:error, "player does not have #{diff |> inspect}"}
     end
   end
 

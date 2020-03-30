@@ -85,3 +85,11 @@ th.current-player {
 th.is-player {
   border: 1px solid gray;
 }
+
+#swap-button, .submit-button {
+  margin-left: 10px;
+}
+
+#swap-button {
+  background-color: indianred;
+}

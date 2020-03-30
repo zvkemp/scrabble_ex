@@ -110,6 +110,7 @@ class Scrabble {
     this.drawSquares();
     this.drawScores();
     this.drawStartButton();
+    this.drawSwapButton();
   }
 
   handleRack(payload) {
@@ -172,6 +173,10 @@ class Scrabble {
         case "ArrowRight": {
           event.preventDefault();
           return component.moveByArrow(1, 0);
+        }
+        case "Enter": {
+          event.preventDefault();
+          return component.submitProposed();
         }
       }
 
@@ -306,6 +311,10 @@ class Scrabble {
     this.channel.push("proposed", this.proposed);
   }
 
+  sendSwapped(str) {
+    this.channel.push("swap", str);
+  }
+
   clickSetCursor(i) {
     let tile = select(`#tile-${this.cursor}`);
     if (this.cursor === i) {
@@ -398,7 +407,7 @@ class Scrabble {
     currentSquares.html(d => d === "BLANK" ? "" : d);
     squares.exit().remove();
 
-    let button = select('#submit-button-container').selectAll('button').data([1]);
+    let button = select('#submit-button-container').selectAll('button.submit-button').data([1]);
     button.enter()
       .append('button')
       .attr('class', 'submit-button')
@@ -475,6 +484,29 @@ class Scrabble {
       .attr('class', 'start-button')
       .html("click here to start")
       .on("click", () => { channel.push("start") });
+
+    selection.exit().remove();
+  }
+
+  drawSwapButton() {
+    let data = [];
+    if (this.current_player === this.player) {
+      data.push(0);
+    }
+
+    let selection = select('#submit-button-container').selectAll('button#swap-button').data(data);
+
+    let component = this;
+    selection.enter()
+      .append('button')
+      .attr('id', 'swap-button')
+      .html("SWAP")
+      .on('click', () => {
+        let response = window.prompt("please enter letters to swap, separated by spaces. Enter BLANK to swap a blank.");
+        if (response) {
+          component.sendSwapped(response);
+        }
+      });
 
     selection.exit().remove();
   }

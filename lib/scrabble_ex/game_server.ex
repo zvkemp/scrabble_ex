@@ -42,6 +42,13 @@ defmodule ScrabbleEx.GameServer do
     end
   end
 
+  def handle_call({:swap, player, string}, _from, game) do
+    case Game.swap(game, player, string) do
+      {:ok, new_game} -> {:reply, {:ok, new_game}, new_game}
+      {:error, msg} = e -> {:reply, e, game}
+    end
+  end
+
   def handle_call({:play, player, payload}, _from, game) do
     case Game.play(game, player, payload) do
       {:ok, new_game} -> {:reply, {:ok, new_game}, new_game}
