@@ -64,6 +64,10 @@
   border: none;
 }
 
+.board-square.tile-blank {
+  color: indianred;
+}
+
 .board-square.cursor {
   border: 2px solid red;
   border-bottom: 3px solid green;

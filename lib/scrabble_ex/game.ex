@@ -57,7 +57,7 @@ defmodule ScrabbleEx.Game do
     "X" => 1,
     "Y" => 2,
     "Z" => 1,
-    "BLANK" => 2 # FIXME
+    "BLANK" => 20 # FIXME
   }
 
   def add_player(%Game{current_player: p}) when is_binary(p) do
@@ -131,7 +131,7 @@ defmodule ScrabbleEx.Game do
          {:ok, score} <- ScrabbleEx.Score.score(board, new_board, letter_map, first_turn) do
       new_scores = Map.update(scores, player, [score], fn xs -> [score | xs] end)
       # remove played letters
-      new_racks = Map.put(game.racks, player, game.racks[player] -- Map.values(letter_map))
+         new_racks = Map.put(game.racks, player, game.racks[player] -- (Map.values(letter_map) |> Enum.map(&normalize_blank/1)))
 
       {:ok,
        %Game{

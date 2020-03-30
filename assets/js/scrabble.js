@@ -119,8 +119,27 @@ class Scrabble {
   handleRack(payload) {
     if (payload.rack) {
       this.rack = payload.rack;
-      this.drawRack();
     }
+  }
+
+  get rack() {
+    return this._rack;
+  }
+
+  pushRack(char) {
+    if (char[0] === ":") {
+      this.rack.push("BLANK")
+    } else {
+      this.rack.push(char)
+    }
+
+    this.drawRack();
+  }
+
+  set rack(newRack) {
+    // FIXME: use a proxy to draw on push as well?
+    this._rack = newRack;
+    this.drawRack();
   }
 
   didReceiveAttrs() {
@@ -236,12 +255,15 @@ class Scrabble {
           return this.setProposed(null);
         }
       }
-      tile.html('').classed("tile-proposed", false);
+      tile.html('').classed("tile-proposed", false)
+        .classed("tile-blank", false);
       this.deleteProposed(this.cursor);
       this.reverseCursor();
     } else {
       if (this.updateProposed(this.cursor, char)) {
-        tile.html(char).classed("tile-proposed", true);
+        let isBlank = this.proposed[this.cursor][0] === ":"
+        tile.html(this.proposed[this.cursor]).classed("tile-proposed", true)
+          .classed("tile-blank", isBlank);
         this.advanceCursor();
       }
     }
@@ -251,24 +273,29 @@ class Scrabble {
     let d = this.proposed[cursor];
     delete this.proposed[cursor];
     if (d) {
-      this.rack.push(d);
+      this.pushRack(d);
     }
-    this.drawRack();
     console.info(d);
     this.sendProposed();
   }
 
   updateProposed(cursor, char) {
     let current = this.proposed[cursor]
-
+    let usingBlank = false;
     let i = this.rack.indexOf(char);
-    if (i < 0) { return false }
+    if (i < 0) {
+      i = this.rack.indexOf("BLANK");
+
+      if (i < 0) { return false }
+      usingBlank = true;
+    }
 
     this.rack.splice(i, 1);
     if (current) {
-      this.rack.push(current);
+      this.pushRack(current);
     }
-    this.proposed[cursor] = char
+
+    this.proposed[cursor] = `${usingBlank ? ":" : ""}${char}`
     this.sendProposed();
     this.drawRack();
 
@@ -350,9 +377,16 @@ class Scrabble {
 
     let currentSquares = squares.merge(enterJoin);
     currentSquares.classed("tile", d => d.character);
+    currentSquares.classed("tile-blank", d => d.character && d.character[0] == ":");
     currentSquares.classed("tile-proposed", (d, i) => this.proposed[i]);
     currentSquares.filter((d) => d.has_cursor).classed("cursor", true);
-    currentSquares.html((d, i) => d.character || this.proposed[i] || "");
+    currentSquares.html((d, i) => {
+      if (d.character && d.character[0] == ":") {
+        return d.character[1];
+      } else {
+        return d.character || this.proposed[i] || "";
+      }
+    });
     squares.exit().remove();
   }
 
@@ -365,7 +399,7 @@ class Scrabble {
       .attr('class', 'rack-square tile')
 
     let currentSquares = squares.merge(enterJoin);
-    currentSquares.html(d => d);
+    currentSquares.html(d => d === "BLANK" ? "" : d);
     squares.exit().remove();
 
     let button = select('#submit-button-container').selectAll('button').data([1]);

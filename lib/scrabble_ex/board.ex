@@ -14,7 +14,7 @@ defmodule ScrabbleEx.Board do
 
     defp map_term(nil), do: %{}
     defp map_term(a) when is_atom(a), do: %{bonus: "#{a}"}
-    defp map_term(":" <> c), do: %{character: c}
+    # defp map_term(":" <> c), do: %{character: c}
     defp map_term(c) when is_binary(c), do: %{character: c}
   end
 
