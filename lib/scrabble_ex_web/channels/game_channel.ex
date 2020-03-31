@@ -41,9 +41,13 @@ defmodule ScrabbleExWeb.GameChannel do
   # in a player's rack
   # or maybe that makes it more real?
   def handle_in("proposed", payload, socket) do
-    if call(socket, :state).current_player == socket.assigns.player do
-      nil
-      # broadcast!(socket, "new_proposed", payload)
+    game = call(socket, :state)
+    if game.current_player == socket.assigns.player do
+      # case ScrabbleEx.Game.propose(game, socket.assigns.player, payload) do
+      #   {:ok, scores} -> push(socket, "error", %{scores: scores})
+      #   {:error, m} = e -> push(socket, "error", %{reason: m})
+      # end
+      broadcast!(socket, "new_proposed", payload)
     end
 
     {:noreply, socket}

@@ -14,6 +14,10 @@ defmodule ScrabbleEx.GameServer do
     GenServer.start(__MODULE__, id, opts)
   end
 
+  def set_rack(name, player, rack) do
+    GenServer.call({:global, "game:#{name}"}, {:set_rack, player, rack})
+  end
+
   def init(id) do
     {:ok, Game.new(id, players: [])}
   end
@@ -25,6 +29,11 @@ defmodule ScrabbleEx.GameServer do
 
   def handle_call(:state, _from, game) do
     {:reply, game, game}
+  end
+
+  def handle_call({:set_rack, player, rack}, _from, game) do
+    new_racks = game.racks |> Map.put(player, rack)
+    {:reply, :ok, %Game{game | racks: new_racks}}
   end
 
   def handle_call({:add_player, player}, _from, game) do

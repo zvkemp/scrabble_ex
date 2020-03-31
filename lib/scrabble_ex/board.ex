@@ -168,7 +168,7 @@ defmodule ScrabbleEx.Board do
             y == 0 || (y > 0 && y < size - 1 && !is_binary(board.state[i - size])) ->
               # IO.puts("finding vertical i=#{i} y=#{y}")
               indexes =
-                Stream.iterate(i, &(&1 + 15))
+                Stream.iterate(i, &(&1 + size))
                 |> Enum.take_while(fn iy ->
                   y < overflow_index && is_binary(board.state[iy])
                 end)

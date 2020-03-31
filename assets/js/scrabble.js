@@ -51,6 +51,7 @@ class Scrabble {
     });
 
     this.channel.on("new_proposed", payload => {
+      if (this.current_player === this.player) { return }
       this.handleProposed(payload);
     });
 
@@ -220,11 +221,11 @@ class Scrabble {
     let x = this.cursorX() + dx;
     let y = this.cursorY() + dy;
 
-    if ((dx > 0 && x > 14) || (dx < 0 && x < 0)) {
+    if ((dx > 0 && x > (this.size - 1)) || (dx < 0 && x < 0)) {
       return false;
     }
 
-    if ((dy > 0 && y > 14) || (dy < 0 && y < 0)) {
+    if ((dy > 0 && y > (this.size - 1)) || (dy < 0 && y < 0)) {
       return false;
     }
 

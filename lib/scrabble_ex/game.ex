@@ -167,6 +167,25 @@ defmodule ScrabbleEx.Game do
     defstruct [:player, :letter_map]
   end
 
+  def propose(
+        %__MODULE__{scores: scores, log: log, players: players, board: board} = game,
+        player,
+        letter_map
+      ) do
+    letter_map = normalize_map(letter_map, board.size)
+    first_turn = Enum.empty?(log)
+    turn = %Turn{player: player, letter_map: letter_map}
+
+    with :ok <- validate_play(turn, game),
+         {:ok, new_board} <- Board.merge_and_validate(board, letter_map),
+         {:ok, score} <- ScrabbleEx.Score.score(board, new_board, letter_map, first_turn) do
+
+      {:ok, score}
+    else
+      {:error, message} = e -> e
+    end
+  end
+
   def play(
         %__MODULE__{scores: scores, log: log, players: players, board: board} = game,
         player,
@@ -237,9 +256,15 @@ defmodule ScrabbleEx.Game do
     letter_map
     |> Enum.map(fn
       {{x, y}, v} -> {to_index(x, y, size), v}
-      {x, v} -> {x, v |> upcase()}
+      {x, v} -> {parse_int(x), v |> upcase()}
     end)
     |> Enum.into(%{})
+  end
+
+  defp parse_int(x) when is_integer(x), do: x
+  defp parse_int(x) when is_binary(x) do
+    {i, _} = Integer.parse(x)
+    i
   end
 
   defp upcase(c) do
