@@ -67,10 +67,12 @@ defmodule ScrabbleEx.Score do
 
   defp letter_bonus(:double_letter), do: 2
   defp letter_bonus(:triple_letter), do: 3
+  defp letter_bonus(:quad_letter), do: 4
   defp letter_bonus(_), do: 1
 
   defp word_bonus(:double_word), do: 2
   defp word_bonus(:triple_word), do: 3
+  defp word_bonus(:quad_word), do: 4
   defp word_bonus(_), do: 1
 
   defp value("A"), do: 1
