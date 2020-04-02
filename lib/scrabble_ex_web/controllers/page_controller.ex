@@ -3,7 +3,7 @@ defmodule ScrabbleExWeb.PageController do
 
   def index(conn, _params) do
     if Map.has_key?(conn.cookies, "_scrabble_ex_identity") do
-      redirect(conn, to: "/hello") |> halt()
+      redirect(conn, to: page_path(:hello)) |> halt()
     else
       render(conn, "index.html")
     end
@@ -23,7 +23,7 @@ defmodule ScrabbleExWeb.PageController do
       |> render("show.html")
     else
       conn
-      |> redirect(to: "/") |> halt()
+      |> redirect(to: page_path(:index)) |> halt()
     end
   end
 
@@ -37,4 +37,14 @@ defmodule ScrabbleExWeb.PageController do
     |> assign(:token, token)
     |> render("hello.html")
   end
+
+  # use the full path helper to ensure
+  # a proper prefix when ScrabbleExWeb is mounted in another
+  # endpoint.
+  defp page_path(action) do
+    ScrabbleExWeb.Router.Helpers.page_path(
+      ScrabbleExWeb.Endpoint, action
+    )
+  end
+
 end
