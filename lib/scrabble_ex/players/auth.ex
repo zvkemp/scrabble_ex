@@ -1,7 +1,6 @@
 defmodule ScrabbleEx.Players.Auth do
   alias ScrabbleEx.Players.{Encryption, User}
 
-
   def login(params, repo) do
     user = repo.get_by(User, username: String.downcase(params["username"]))
 
@@ -14,7 +13,7 @@ defmodule ScrabbleEx.Players.Auth do
   defp authenticate(%User{} = user, password) do
     case Encryption.validate_password(user, password) do
       {:ok, validated_user} -> true
-      {:error, _ } -> false
+      {:error, _} -> false
     end
   end
 

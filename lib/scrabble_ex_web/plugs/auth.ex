@@ -8,6 +8,7 @@ defmodule ScrabbleExWeb.Plugs.Auth do
   def call(conn, _opts) do
     if user_id = Plug.Conn.get_session(conn, :current_user_id) do
       current_user = Players.get_user!(user_id)
+
       conn
       |> assign(:current_user, current_user)
     else

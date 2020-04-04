@@ -12,7 +12,6 @@ defmodule ScrabbleEx.Score do
       scores =
         words_to_score
         |> Enum.map(fn word ->
-
           text = Board.text_for(new_board, word)
 
           letter_total =
@@ -48,8 +47,10 @@ defmodule ScrabbleEx.Score do
       end)
 
     cond do
-      real_words |> Enum.all?(fn
-        {"*",_} -> true # BINGO
+      real_words
+      |> Enum.all?(fn
+        # BINGO
+        {"*", _} -> true
         {_, x} -> x
       end) ->
         {:ok, words_with_scores}

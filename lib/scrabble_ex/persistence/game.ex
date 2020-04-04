@@ -3,7 +3,6 @@ defmodule ScrabbleEx.Persistence.Game do
   alias ScrabbleEx.Persistence.Term
   import Ecto.Changeset
 
-
   schema "games" do
     field :name, :string
     field :state, Term

@@ -5,7 +5,18 @@ defmodule ScrabbleEx.Game do
   import Map, only: [put: 3, merge: 2]
 
   @derive {Jason.Encoder, only: [:board, :scores, :current_player, :players, :game_over]}
-  defstruct [:board, :players, :log, :scores, :racks, :bag, :current_player, :pkid, :name, :game_over]
+  defstruct [
+    :board,
+    :players,
+    :log,
+    :scores,
+    :racks,
+    :bag,
+    :current_player,
+    :pkid,
+    :name,
+    :game_over
+  ]
 
   def new("super:" <> _ = name, players: players) do
     new(name, players: players, board: ScrabbleEx.Board.super_new(), bag: new_super_bag())
@@ -29,7 +40,7 @@ defmodule ScrabbleEx.Game do
       scores: players |> Enum.map(&{&1, []}) |> Enum.into(%{}),
       racks: players |> Enum.map(&{&1, []}) |> Enum.into(%{}),
       name: name,
-      game_over: false,
+      game_over: false
     }
     |> fill_racks
   end
@@ -91,7 +102,7 @@ defmodule ScrabbleEx.Game do
     "X" => 2,
     "Y" => 4,
     "Z" => 2,
-    "BLANK" => 4,
+    "BLANK" => 4
   }
 
   def add_player(%Game{current_player: p}) when is_binary(p) do
@@ -106,16 +117,16 @@ defmodule ScrabbleEx.Game do
         new_racks = game.racks |> put(player, [])
 
         {:ok,
-          game
-          |> merge(%{scores: new_scores, racks: new_racks, players: new_players})
-          |> fill_racks()
-        }
+         game
+         |> merge(%{scores: new_scores, racks: new_racks, players: new_players})
+         |> fill_racks()}
+
       _ ->
         {:error, "player already joined"}
     end
   end
 
-  def start(%Game{ current_player: nil } = game) do
+  def start(%Game{current_player: nil} = game) do
     {:ok, next_player(game)}
   end
 
@@ -177,7 +188,6 @@ defmodule ScrabbleEx.Game do
     with :ok <- validate_play(turn, game),
          {:ok, new_board} <- Board.merge_and_validate(board, letter_map),
          {:ok, score} <- ScrabbleEx.Score.score(board, new_board, letter_map, first_turn) do
-
       {:ok, score}
     else
       {:error, message} = e -> e
@@ -202,7 +212,12 @@ defmodule ScrabbleEx.Game do
          {:ok, score} <- ScrabbleEx.Score.score(board, new_board, letter_map, first_turn) do
       new_scores = Map.update(scores, player, [score], fn xs -> [score | xs] end)
       # remove played letters
-         new_racks = Map.put(game.racks, player, game.racks[player] -- (Map.values(letter_map) |> Enum.map(&normalize_blank/1)))
+      new_racks =
+        Map.put(
+          game.racks,
+          player,
+          game.racks[player] -- (Map.values(letter_map) |> Enum.map(&normalize_blank/1))
+        )
 
       {:ok,
        game
@@ -225,19 +240,21 @@ defmodule ScrabbleEx.Game do
   end
 
   def swap(%Game{} = game, player, str) do
-    swapped = str |> String.upcase |> String.split(~r/\s+/, trim: true)
+    swapped = str |> String.upcase() |> String.split(~r/\s+/, trim: true)
+
     with :ok <- validate_swap(game, player, swapped),
          :ok <- validate_swappability(game) do
-      count = swapped |> Enum.count
+      count = swapped |> Enum.count()
       new_tiles = game.bag |> Enum.take(count)
       new_rack = (game.racks[player] -- swapped) ++ new_tiles
 
-      new_bag = (Enum.drop(game.bag, count) ++ swapped) |> Enum.shuffle
+      new_bag = (Enum.drop(game.bag, count) ++ swapped) |> Enum.shuffle()
       new_racks = Map.put(game.racks, player, new_rack)
 
-      new_game = game
-                 |> merge(%{bag: new_bag, racks: new_racks})
-                 |> next_player
+      new_game =
+        game
+        |> merge(%{bag: new_bag, racks: new_racks})
+        |> next_player
 
       {:ok, new_game}
     else
@@ -255,6 +272,7 @@ defmodule ScrabbleEx.Game do
 
   defp validate_swap(game, player, data) do
     diff = data -- game.racks[player]
+
     case diff do
       [] -> :ok
       _ -> {:error, "player does not have #{diff |> inspect}"}
@@ -271,6 +289,7 @@ defmodule ScrabbleEx.Game do
   end
 
   defp parse_int(x) when is_integer(x), do: x
+
   defp parse_int(x) when is_binary(x) do
     {i, _} = Integer.parse(x)
     i
@@ -328,7 +347,10 @@ defmodule ScrabbleEx.Game do
       _ ->
         {:error,
          "player does not have the goods; tried=#{
-           Map.values(turn.letter_map) |> Enum.map(&normalize_blank/1) |> Enum.join(" ") |> inspect
+           Map.values(turn.letter_map)
+           |> Enum.map(&normalize_blank/1)
+           |> Enum.join(" ")
+           |> inspect
          }; has=#{racks[turn.player] |> Enum.join(" ") |> inspect}"}
     end
   end

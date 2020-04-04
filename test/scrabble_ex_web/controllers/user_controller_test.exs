@@ -4,7 +4,10 @@ defmodule ScrabbleExWeb.UserControllerTest do
   alias ScrabbleEx.Players
 
   @create_attrs %{encrypted_password: "some encrypted_password", username: "some username"}
-  @update_attrs %{encrypted_password: "some updated encrypted_password", username: "some updated username"}
+  @update_attrs %{
+    encrypted_password: "some updated encrypted_password",
+    username: "some updated username"
+  }
   @invalid_attrs %{encrypted_password: nil, username: nil}
 
   def fixture(:user) do
@@ -24,6 +27,7 @@ defmodule ScrabbleExWeb.UserControllerTest do
       conn = post(conn, Routes.user_path(conn, :create), user: @create_attrs)
 
       assert %{} = redirected_params(conn)
+
       # assert redirected_to(conn) == Routes.hello_path(conn)
 
       conn = get(conn, "/hello")

@@ -14,7 +14,9 @@ defmodule ScrabbleExWeb.LoginController do
         conn
         |> put_session(:current_user_id, user.id)
         |> put_flash(:info, "Signed in")
-        |> redirect(to: "/hello") # FIXME
+        # FIXME
+        |> redirect(to: "/hello")
+
       :error ->
         conn
         |> put_flash(:error, "There was a problem signing you in.")

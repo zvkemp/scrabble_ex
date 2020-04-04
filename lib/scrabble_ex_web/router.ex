@@ -20,7 +20,7 @@ defmodule ScrabbleExWeb.Router do
 
     get "/login", LoginController, :new
     post "/login", LoginController, :create
-    resources "/register", UserController, only: [:create,  :new]
+    resources "/register", UserController, only: [:create, :new]
   end
 
   scope "/", ScrabbleExWeb do

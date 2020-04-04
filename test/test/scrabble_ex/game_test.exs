@@ -3,7 +3,7 @@ defmodule ScrabbleEx.GameTest do
   alias ScrabbleEx.{Game, Board}
 
   setup do
-    id = :crypto.strong_rand_bytes(6) |> Base.encode64
+    id = :crypto.strong_rand_bytes(6) |> Base.encode64()
     {:ok, game} = Game.new(id, players: ["zach", "kate"]) |> Game.start()
     %{game: game}
   end

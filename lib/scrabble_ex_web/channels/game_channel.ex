@@ -42,6 +42,7 @@ defmodule ScrabbleExWeb.GameChannel do
   # or maybe that makes it more real?
   def handle_in("proposed", payload, socket) do
     game = call(socket, :state)
+
     if game.current_player == socket.assigns.player do
       # case ScrabbleEx.Game.propose(game, socket.assigns.player, payload) do
       #   {:ok, scores} -> push(socket, "error", %{scores: scores})
@@ -67,9 +68,11 @@ defmodule ScrabbleExWeb.GameChannel do
       {:ok, game} ->
         push_rack(socket, game)
         broadcast!(socket, "state", game)
+
       {:error, msg} = e ->
         push(socket, "error", %{message: msg})
     end
+
     {:noreply, socket}
   end
 

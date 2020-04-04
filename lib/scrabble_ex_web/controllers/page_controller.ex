@@ -34,8 +34,8 @@ defmodule ScrabbleExWeb.PageController do
   # endpoint.
   defp page_path(action) do
     ScrabbleExWeb.Router.Helpers.page_path(
-      ScrabbleExWeb.Endpoint, action
+      ScrabbleExWeb.Endpoint,
+      action
     )
   end
-
 end

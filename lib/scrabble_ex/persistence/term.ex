@@ -14,13 +14,16 @@ defmodule ScrabbleEx.Persistence.Term do
 
   def load(bin) do
     term = bin |> :erlang.binary_to_term()
-    term = cond do
-      is_struct(term) ->
-        # Merge with an empty struct to get possibly-new fields
-        Map.merge(struct(term.__struct__), term)
-      true ->
-        term
-    end
+
+    term =
+      cond do
+        is_struct(term) ->
+          # Merge with an empty struct to get possibly-new fields
+          Map.merge(struct(term.__struct__), term)
+
+        true ->
+          term
+      end
 
     {:ok, term}
   end
