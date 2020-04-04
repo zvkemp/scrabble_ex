@@ -5,12 +5,20 @@ defmodule ScrabbleEx.GameServer do
   alias ScrabbleEx.Game
   alias ScrabbleEx.Persistence
 
-  def start_link(opts) do
-    GenServer.start_link(__MODULE__, :ok, opts)
+  def start_link([name: {:global, "game:" <> id}] = opts) do
+    GenServer.start_link(__MODULE__, id, opts)
+  end
+
+  def start_link(id, opts) do
+    GenServer.start_link(__MODULE__, id, opts)
   end
 
   def get(name) do
     GenServer.call({:global, "game:#{name}"}, :state)
+  end
+
+  def start([name: {:global, "game:" <> id}] = opts) do
+    start(id, opts)
   end
 
   def start(id, opts) do

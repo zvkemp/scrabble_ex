@@ -1,13 +1,11 @@
 defmodule ScrabbleEx.Game do
-  # FIXME: swap turn
   # FIXME: pass turn (toward end of game) - allowed when fewer than 7 tiles remaining in bag
-  # FIXME: handle game over
-  #
 
   alias ScrabbleEx.{Game, Board}
+  import Map, only: [put: 3, merge: 2]
 
-  @derive {Jason.Encoder, only: [:board, :scores, :current_player, :players]}
-  defstruct [:board, :players, :log, :scores, :racks, :bag, :current_player, :pkid, :name]
+  @derive {Jason.Encoder, only: [:board, :scores, :current_player, :players, :game_over]}
+  defstruct [:board, :players, :log, :scores, :racks, :bag, :current_player, :pkid, :name, :game_over]
 
   def new("super:" <> _ = name, players: players) do
     new(name, players: players, board: ScrabbleEx.Board.super_new(), bag: new_super_bag())
@@ -30,7 +28,8 @@ defmodule ScrabbleEx.Game do
       bag: bag,
       scores: players |> Enum.map(&{&1, []}) |> Enum.into(%{}),
       racks: players |> Enum.map(&{&1, []}) |> Enum.into(%{}),
-      name: name
+      name: name,
+      game_over: false,
     }
     |> fill_racks
   end
@@ -103,12 +102,14 @@ defmodule ScrabbleEx.Game do
     case Map.has_key?(game.racks, player) do
       false ->
         new_players = game.players ++ [player]
-        new_scores = game.scores |> Map.put(player, [])
-        new_racks = game.racks |> Map.put(player, [])
+        new_scores = game.scores |> put(player, [])
+        new_racks = game.racks |> put(player, [])
 
         {:ok,
-         %Game{game | scores: new_scores, racks: new_racks, players: new_players} |> fill_racks}
-
+          game
+          |> merge(%{scores: new_scores, racks: new_racks, players: new_players})
+          |> fill_racks()
+        }
       _ ->
         {:error, "player already joined"}
     end
@@ -141,7 +142,7 @@ defmodule ScrabbleEx.Game do
   end
 
   defp next_player(game, index) do
-    %Game{game | current_player: Enum.at(game.players, index)}
+    put(game, :current_player, Enum.at(game.players, index))
   end
 
   defp new_bag do
@@ -183,6 +184,10 @@ defmodule ScrabbleEx.Game do
     end
   end
 
+  def play(%Game{game_over: true} = game, _player, _letter_map) do
+    {:error, "game is over"}
+  end
+
   def play(
         %__MODULE__{scores: scores, log: log, players: players, board: board} = game,
         player,
@@ -200,18 +205,23 @@ defmodule ScrabbleEx.Game do
          new_racks = Map.put(game.racks, player, game.racks[player] -- (Map.values(letter_map) |> Enum.map(&normalize_blank/1)))
 
       {:ok,
-       %Game{
-         game
-         | log: [[player, letter_map] | log],
-           board: new_board,
-           scores: new_scores,
-           racks: new_racks
-       }
+       game
+       |> merge(%{
+         log: [[player, letter_map] | log],
+         board: new_board,
+         scores: new_scores,
+         racks: new_racks
+       })
        |> fill_racks
-       |> next_player}
+       |> next_player
+       |> check_game_over}
     else
       {:error, message} = e -> e
     end
+  end
+
+  def swap(%Game{game_over: true} = game, _player, _str) do
+    play(game, _player, %{})
   end
 
   def swap(%Game{} = game, player, str) do
@@ -225,7 +235,9 @@ defmodule ScrabbleEx.Game do
       new_bag = (Enum.drop(game.bag, count) ++ swapped) |> Enum.shuffle
       new_racks = Map.put(game.racks, player, new_rack)
 
-      new_game = %Game{game | bag: new_bag, racks: new_racks } |> next_player
+      new_game = game
+                 |> merge(%{bag: new_bag, racks: new_racks})
+                 |> next_player
 
       {:ok, new_game}
     else
@@ -432,10 +444,11 @@ defmodule ScrabbleEx.Game do
           }
       end)
 
-    %Game{
-      game
-      | racks: new_racks,
-        bag: new_lc
-    }
+    merge(game, %{racks: new_racks, bag: new_lc})
+  end
+
+  defp check_game_over(%Game{racks: racks} = game) do
+    game_over = Enum.any?(racks, fn {_player, rack} -> Enum.empty?(rack) end)
+    put(game, :game_over, game_over)
   end
 end

@@ -88,10 +88,6 @@ class Scrabble {
       this.data = payload.board;
     }
 
-    console.info(
-      (payload.scores[this.player][0] || []).join(" ")
-    );
-
     this.scores = payload.scores;
     this.players = payload.players;
 
@@ -99,6 +95,7 @@ class Scrabble {
     this.drawScores();
     this.drawStartButton();
     this.drawSwapButton();
+    this.gameOver = payload.gameOver;
   }
 
   handleRack(payload) {

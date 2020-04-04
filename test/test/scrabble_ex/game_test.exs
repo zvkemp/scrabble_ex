@@ -3,7 +3,8 @@ defmodule ScrabbleEx.GameTest do
   alias ScrabbleEx.{Game, Board}
 
   setup do
-    {:ok, game} = Game.new(players: ["zach", "kate"]) |> Game.start()
+    id = :crypto.strong_rand_bytes(6) |> Base.encode64
+    {:ok, game} = Game.new(id, players: ["zach", "kate"]) |> Game.start()
     %{game: game}
   end
 
@@ -58,7 +59,7 @@ defmodule ScrabbleEx.GameTest do
     ]
 
     {:ok, game} =
-      Game.new(players: ["zach", "kate"], board: Board.new(), bag: bag)
+      Game.new("id", players: ["zach", "kate"], board: Board.new(), bag: bag)
       |> Game.start()
 
     result =
@@ -90,7 +91,7 @@ defmodule ScrabbleEx.GameTest do
     ]
 
     {:ok, game} =
-      Game.new(players: ["zach", "kate"], board: Board.new(), bag: bag)
+      Game.new("foo", players: ["zach", "kate"], board: Board.new(), bag: bag)
       |> Game.start()
 
     result =
