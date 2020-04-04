@@ -14,10 +14,20 @@ defmodule ScrabbleExWeb.Router do
   end
 
   scope "/", ScrabbleExWeb do
-    pipe_through :browser
+    pipe_through [:browser, ScrabbleExWeb.Plugs.Guest]
 
     get "/", PageController, :index
-    post "/login", LoginController, :new
+
+    get "/login", LoginController, :new
+    post "/login", LoginController, :create
+    resources "/register", UserController, only: [:create,  :new]
+  end
+
+  scope "/", ScrabbleExWeb do
+    pipe_through [:browser, ScrabbleExWeb.Plugs.Auth]
+
+    delete "/logout", LoginController, :delete
+
     get "/hello", PageController, :hello
     get "/play/:id", PageController, :show
   end

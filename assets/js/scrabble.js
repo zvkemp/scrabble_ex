@@ -23,6 +23,7 @@ class Scrabble {
     this.element = select("section.board-container");
     this.header = select("section.board-header");
     this.rack_container = select("section.rack-container");
+    this.flash_container = select("section.flash-container p");
     this.direction = 'h'; // or 'v';
     this.current_player = undefined;
     this.proposed = {};
@@ -46,29 +47,17 @@ class Scrabble {
       this.handleGameState(payload)
     });
 
-    this.channel.on("board", payload => {
-      this.handleBoard(payload)
-    });
-
     this.channel.on("new_proposed", payload => {
       if (this.current_player === this.player) { return }
       this.handleProposed(payload);
     });
 
-    this.channel.on("info", payload => {
-      console.info(payload);
-    });
-
-    this.channel.on("turn", payload => {
-      console.info("turn", payload)
-
-      if (payload.player) {
-        this.current_player = payload.player;
-      }
-    });
-
     this.channel.on("error", payload => {
-      console.error(payload) // FIXME: render a message
+      this.flash("error", payload);
+    });
+
+    this.channel.on("info", payload => {
+      this.flash("info", payload);
     });
 
     this.channel.on("rack", payload => {
@@ -78,13 +67,9 @@ class Scrabble {
     this.didReceiveAttrs();
   }
 
-  handleBoard(payload) {
-    if (payload.current_player) {
-      this.current_player = payload.current_player // FIXME: where does this logic belong?
-    }
-    this.proposed = {};
-    this.data = payload.board
-    this.drawSquares();
+  flash(level, { message }) {
+    this.flash_container.html(message);
+    this.flash_container.classed("alert-danger", level === "error");
   }
 
   handleProposed(payload) {
@@ -95,6 +80,7 @@ class Scrabble {
   handleGameState(payload) {
     if (payload.current_player) {
       this.current_player = payload.current_player // FIXME: where does this logic belong?
+      this.flash("info", { message: `${this.current_player}'s turn`});
     }
 
     if (payload.board) {

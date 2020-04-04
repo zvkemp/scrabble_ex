@@ -6,6 +6,9 @@
 </section>
 <section class="board-container">
 </section>
+<section class="flash-container">
+  <p class="alert alert-info"></p>
+</section>
 <section class="rack-container">
   <div class="rack-square tile">S</div>
   <div class="rack-square tile">C</div>

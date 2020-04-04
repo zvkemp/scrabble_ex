@@ -1,4 +1,6 @@
 defmodule ScrabbleEx.GameServer do
+  # FIXME: save game to DB
+
   use GenServer
   alias ScrabbleEx.Game
 

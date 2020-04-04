@@ -16,3 +16,5 @@ config :scrabble_ex, ScrabbleExWeb.Endpoint,
 
 # Print only warnings and errors during test
 config :logger, level: :warn
+
+ExUnit.configure(exclude: :pending)

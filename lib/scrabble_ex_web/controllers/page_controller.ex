@@ -9,32 +9,23 @@ defmodule ScrabbleExWeb.PageController do
     end
   end
 
-  # FIXME: redirect if not id
   def show(conn, %{"id" => game_id}) do
-    token = conn.cookies["_scrabble_ex_identity"]
-
-    if token do
-      {:ok, {name, id}} = Phoenix.Token.verify(ScrabbleExWeb.Endpoint, "salt", token)
-
-      conn
-      |> assign(:player, name)
-      |> assign(:token, token)
-      |> assign(:game_id, game_id)
-      |> render("show.html")
-    else
-      conn
-      |> redirect(to: page_path(:index)) |> halt()
-    end
-  end
-
-  # FIXME: redirect if not id
-  def hello(conn, _params) do
-    token = conn.cookies["_scrabble_ex_identity"]
-    {:ok, {name, id}} = Phoenix.Token.verify(ScrabbleExWeb.Endpoint, "salt", token)
+    user = conn.assigns.current_user
+    name = user.username
+    token = Phoenix.Token.sign(ScrabbleExWeb.Endpoint, "salt", {name, "FIXME-REMOVE-THIS-ARG"})
 
     conn
     |> assign(:player, name)
     |> assign(:token, token)
+    |> assign(:game_id, game_id)
+    |> render("show.html")
+  end
+
+  def hello(conn, _params) do
+    user = conn.assigns.current_user
+
+    conn
+    |> assign(:player, user.username)
     |> render("hello.html")
   end
 

@@ -160,7 +160,7 @@ defmodule ScrabbleExWeb.GameChannelTest do
     push(zach, "submit_payload", %{"112" => "Z", "113" => "O", "114" => "T"})
 
     # assert_broadcast("state", %Game{})
-    assert_push("error", %{reason: "player does not have the goods" <> _})
+    assert_push("error", %{message: "player does not have the goods" <> _})
     assert game_state().current_player == "zach"
   end
 end

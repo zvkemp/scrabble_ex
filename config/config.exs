@@ -7,8 +7,8 @@
 # General application configuration
 use Mix.Config
 
-# config :scrabble_ex,
-#   ecto_repos: [ScrabbleEx.Repo]
+config :scrabble_ex,
+  ecto_repos: [ScrabbleEx.Repo]
 
 # Configures the endpoint
 config :scrabble_ex, ScrabbleExWeb.Endpoint,

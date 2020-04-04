@@ -9,6 +9,16 @@
     <%= csrf_meta_tag() %>
   </head>
   <body>
+    <nav class="navigation">
+      <div class="navigation-title">
+        <a href="/" class="navigation-title">ScrabbleEx</a>
+
+        <ul id="user-actions" class="dropdown-content">
+          <li><%= link "logout", to: Routes.login_path(@conn, :delete), method: :delete %></li>
+        </ul>
+
+      </div>
+    </nav>
     <main role="main" class="container">
       <p class="alert alert-info" role="alert"><%= get_flash(@conn, :info) %></p>
       <p class="alert alert-danger" role="alert"><%= get_flash(@conn, :error) %></p>

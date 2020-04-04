@@ -9,7 +9,7 @@ defmodule ScrabbleEx.Application do
     # List all child processes to be supervised
     children = [
       # Start the Ecto repository
-      # ScrabbleEx.Repo,
+      ScrabbleEx.Repo,
       # Start the endpoint when the application starts
       ScrabbleExWeb.Endpoint,
       # Starts a worker by calling: ScrabbleEx.Worker.start_link(arg)

@@ -42,6 +42,8 @@ defmodule ScrabbleExWeb do
       import ScrabbleExWeb.ErrorHelpers
       import ScrabbleExWeb.Gettext
       alias ScrabbleExWeb.Router.Helpers, as: Routes
+
+      import ScrabbleEx.Players.Auth, only: [signed_in?: 1]
     end
   end
 
