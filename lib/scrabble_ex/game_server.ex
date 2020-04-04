@@ -75,21 +75,21 @@ defmodule ScrabbleEx.GameServer do
   def handle_call(:start_game, _from, game) do
     case Game.start(game) do
       {:ok, new_game} -> {:reply, {:ok, new_game}, save_state(new_game)}
-      {:error, msg} = e -> {:reply, e, game}
+      {:error, _msg} = e -> {:reply, e, game}
     end
   end
 
   def handle_call({:swap, player, string}, _from, game) do
     case Game.swap(game, player, string) do
       {:ok, new_game} -> {:reply, {:ok, new_game}, save_state(new_game)}
-      {:error, msg} = e -> {:reply, e, game}
+      {:error, _msg} = e -> {:reply, e, game}
     end
   end
 
   def handle_call({:play, player, payload}, _from, game) do
     case Game.play(game, player, payload) do
       {:ok, new_game} -> {:reply, {:ok, new_game}, save_state(new_game)}
-      {:error, e} -> {:reply, {:error, e}, game}
+      {:error, _msg} = e -> {:reply, e, game}
     end
   end
 

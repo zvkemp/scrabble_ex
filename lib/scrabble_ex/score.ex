@@ -1,5 +1,5 @@
 defmodule ScrabbleEx.Score do
-  alias ScrabbleEx.{Game, Board}
+  alias ScrabbleEx.Board
 
   def score(board, new_board, letter_map, first_turn \\ false) do
     words_to_score = Board.word_maps(new_board) -- Board.word_maps(board)
@@ -31,9 +31,10 @@ defmodule ScrabbleEx.Score do
 
       # BINGO
       scores =
-        cond do
-          Enum.count(letter_map) == 7 -> [["*", 50] | scores]
-          true -> scores
+        if Enum.count(letter_map) == 7 do
+          [["*", 50] | scores]
+        else
+          scores
         end
 
       {:ok, scores} |> validate_words
@@ -46,23 +47,20 @@ defmodule ScrabbleEx.Score do
         Map.put(acc, word, ScrabbleEx.Dictionary.word?(word))
       end)
 
-    cond do
-      real_words
-      |> Enum.all?(fn
-        # BINGO
-        {"*", _} -> true
-        {_, x} -> x
-      end) ->
-        {:ok, words_with_scores}
+    if Enum.all?(real_words, fn
+         # BINGO
+         {"*", _} -> true
+         {_, x} -> x
+       end) do
+      {:ok, words_with_scores}
+    else
+      not_words =
+        real_words
+        |> Enum.filter(fn {_, x} -> !x end)
+        |> Enum.map(fn {w, _} -> w end)
+        |> Enum.join(", ")
 
-      true ->
-        not_words =
-          real_words
-          |> Enum.filter(fn {_, x} -> !x end)
-          |> Enum.map(fn {w, _} -> w end)
-          |> Enum.join(", ")
-
-        {:error, "these are not words: #{not_words}"}
+      {:error, "these are not words: #{not_words}"}
     end
   end
 

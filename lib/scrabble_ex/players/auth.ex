@@ -12,7 +12,7 @@ defmodule ScrabbleEx.Players.Auth do
 
   defp authenticate(%User{} = user, password) do
     case Encryption.validate_password(user, password) do
-      {:ok, validated_user} -> true
+      {:ok, _validated_user} -> true
       {:error, _} -> false
     end
   end

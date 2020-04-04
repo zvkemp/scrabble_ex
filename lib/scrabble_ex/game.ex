@@ -130,7 +130,7 @@ defmodule ScrabbleEx.Game do
     {:ok, next_player(game)}
   end
 
-  def start(game) do
+  def start(_game) do
     {:error, "game already started"}
   end
 
@@ -147,7 +147,7 @@ defmodule ScrabbleEx.Game do
   defp index_of_player(players, player) do
     Enum.with_index(players)
     |> Enum.reduce(0, fn
-      {^player, idx}, acc -> idx
+      {^player, idx}, _acc -> idx
       _, acc -> acc
     end)
   end
@@ -176,8 +176,9 @@ defmodule ScrabbleEx.Game do
     defstruct [:player, :letter_map]
   end
 
+  # FIXME: make a better 'live score' feature
   def propose(
-        %__MODULE__{scores: scores, log: log, players: players, board: board} = game,
+        %__MODULE__{log: log, board: board} = game,
         player,
         letter_map
       ) do
@@ -190,16 +191,16 @@ defmodule ScrabbleEx.Game do
          {:ok, score} <- ScrabbleEx.Score.score(board, new_board, letter_map, first_turn) do
       {:ok, score}
     else
-      {:error, message} = e -> e
+      {:error, _msg} = e -> e
     end
   end
 
-  def play(%Game{game_over: true} = game, _player, _letter_map) do
+  def play(%Game{game_over: true}, _player, _letter_map) do
     {:error, "game is over"}
   end
 
   def play(
-        %__MODULE__{scores: scores, log: log, players: players, board: board} = game,
+        %__MODULE__{scores: scores, log: log, board: board} = game,
         player,
         letter_map
       ) do
@@ -231,12 +232,12 @@ defmodule ScrabbleEx.Game do
        |> next_player
        |> check_game_over}
     else
-      {:error, message} = e -> e
+      {:error, _msg} = e -> e
     end
   end
 
-  def swap(%Game{game_over: true} = game, _player, _str) do
-    play(game, _player, %{})
+  def swap(%Game{game_over: true} = game, player, _str) do
+    play(game, player, %{})
   end
 
   def swap(%Game{} = game, player, str) do
@@ -258,7 +259,7 @@ defmodule ScrabbleEx.Game do
 
       {:ok, new_game}
     else
-      {:error, msg} = e -> e
+      {:error, _msg} = e -> e
     end
   end
 
@@ -308,7 +309,7 @@ defmodule ScrabbleEx.Game do
          :ok <- validate_common(turn, game) do
       :ok
     else
-      {:error, msg} = e -> e
+      {:error, _msg} = e -> e
     end
   end
 
@@ -333,13 +334,14 @@ defmodule ScrabbleEx.Game do
   end
 
   defp validate_player_is_current(turn, game) do
-    cond do
-      turn.player == game.current_player -> :ok
-      true -> {:error, "it is not #{turn.player}'s turn"}
+    if turn.player == game.current_player do
+      :ok
+    else
+      {:error, "it is not #{turn.player}'s turn"}
     end
   end
 
-  defp validate_player_has_tiles(%Turn{} = turn, %Game{racks: racks} = game) do
+  defp validate_player_has_tiles(%Turn{} = turn, %Game{racks: racks}) do
     case (Map.values(turn.letter_map) |> Enum.map(&normalize_blank/1)) -- racks[turn.player] do
       [] ->
         :ok
@@ -387,15 +389,13 @@ defmodule ScrabbleEx.Game do
   defp validate_coords_present(coords, letter_map, board) do
     coords = Enum.map(coords, &to_index(&1, board.size))
 
-    cond do
-      Enum.all?(coords, fn index ->
-        Map.has_key?(letter_map, index) ||
-            is_binary(Map.get(board.state, index))
-      end) ->
-        :ok
-
-      true ->
-        {:error, "word is not continuous"}
+    if Enum.all?(coords, fn index ->
+         Map.has_key?(letter_map, index) ||
+           is_binary(Map.get(board.state, index))
+       end) do
+      :ok
+    else
+      {:error, "word is not continuous"}
     end
   end
 
@@ -405,6 +405,7 @@ defmodule ScrabbleEx.Game do
     y * size + x
   end
 
+  # credo:disable-for-next-line
   defp to_xy(index, size) do
     y = div(index, size)
     x = rem(index, size)
@@ -435,18 +436,20 @@ defmodule ScrabbleEx.Game do
   end
 
   defp validate_length(letter_map, min) do
-    cond do
-      letter_map |> Enum.count() >= min -> :ok
-      true -> {:error, "not long enough"}
+    if letter_map |> Enum.count() >= min do
+      :ok
+    else
+      {:error, "not long enough"}
     end
   end
 
   defp validate_crosses_center(letter_map, board_size) do
     center_index = div(board_size, 2) * board_size + div(board_size, 2)
 
-    cond do
-      letter_map |> Map.has_key?(center_index) -> :ok
-      true -> {:error, "does not cross center"}
+    if letter_map |> Map.has_key?(center_index) do
+      :ok
+    else
+      {:error, "does not cross center"}
     end
   end
 

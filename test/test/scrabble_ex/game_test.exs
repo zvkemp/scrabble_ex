@@ -62,14 +62,13 @@ defmodule ScrabbleEx.GameTest do
       Game.new("id", players: ["zach", "kate"], board: Board.new(), bag: bag)
       |> Game.start()
 
-    result =
-      Game.propose(game, "zach", %{
-        "52" => ":J",
-        "67" => "O",
-        "82" => ":K",
-        "97" => "E",
-        "112" => "S"
-      })
+    Game.propose(game, "zach", %{
+      "52" => ":J",
+      "67" => "O",
+      "82" => ":K",
+      "97" => "E",
+      "112" => "S"
+    })
 
     result =
       Game.play(game, "zach", %{

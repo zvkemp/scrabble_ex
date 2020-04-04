@@ -40,7 +40,7 @@ defmodule ScrabbleExWeb.LoginController do
       )
 
     conn
-    |> put_resp_cookie("_scrabble_ex_identity", token, max_age: 86400 * 6000)
+    |> put_resp_cookie("_scrabble_ex_identity", token, max_age: 86_400 * 6_000)
     |> text("hello, #{name}")
   end
 end
