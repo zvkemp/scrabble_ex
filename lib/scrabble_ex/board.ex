@@ -1,4 +1,5 @@
 defmodule ScrabbleEx.Board do
+  # FIXME: only look for new words that include tiles found in the letter map (e.g., exclude anything not in a row or column played)
   defstruct [:state, :size]
 
   defimpl Jason.Encoder, for: [__MODULE__] do

@@ -1,5 +1,9 @@
 defmodule ScrabbleEx.Game do
+  # FIXME: add a timer
+  # FIXME: lose a turn if you propose a non-word, or allow other players to vote
   # FIXME: pass turn (toward end of game) - allowed when fewer than 7 tiles remaining in bag
+  # FIXME: subtract remaining letters when game ends
+  # FIXME: add 'letters left in bag' message
 
   alias ScrabbleEx.{Game, Board}
   import Map, only: [put: 3, merge: 2]

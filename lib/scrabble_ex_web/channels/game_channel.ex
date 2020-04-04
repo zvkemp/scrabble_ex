@@ -81,9 +81,13 @@ defmodule ScrabbleExWeb.GameChannel do
 
     case call(socket, {:play, socket.assigns.player, payload}) do
       {:ok, game} ->
+        letters_left = Enum.count(game.bag)
+        player = game.current_player
+        inflection = if letters_left == 1, do: "letter", else: "letters"
+        msg = "#{letters_left} #{inflection} left in bag. #{player}'s turn."
         broadcast!(socket, "state", game)
+        broadcast!(socket, "info", %{message: msg})
         push_rack(socket, game)
-
       {:error, msg} ->
         push(socket, "error", %{message: msg})
     end

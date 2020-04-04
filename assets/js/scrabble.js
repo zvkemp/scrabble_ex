@@ -80,7 +80,6 @@ class Scrabble {
   handleGameState(payload) {
     if (payload.current_player) {
       this.current_player = payload.current_player // FIXME: where does this logic belong?
-      this.flash("info", { message: `${this.current_player}'s turn`});
     }
 
     if (payload.board) {
@@ -450,7 +449,13 @@ class Scrabble {
       cells = cells.merge(cell_entry);
 
       cells.html(function (p) {
-        return (scores[p][d] || []).join(' ')
+        let localScores = scores[p][d] || [];
+
+        let total = localScores.reduce((acc, score) => {
+          return acc + score[1]
+        }, 0);
+
+        return `<b>${total}</b> (${localScores.join(' ')})`
       });
     })
   }
