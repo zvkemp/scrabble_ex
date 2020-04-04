@@ -7,25 +7,21 @@ defmodule ScrabbleEx.Game do
   alias ScrabbleEx.{Game, Board}
 
   @derive {Jason.Encoder, only: [:board, :scores, :current_player, :players]}
-  defstruct [:board, :players, :log, :scores, :racks, :bag, :current_player]
+  defstruct [:board, :players, :log, :scores, :racks, :bag, :current_player, :pkid, :name]
 
-  def new("super:" <> id, players: players) do
-    new(players: players, board: ScrabbleEx.Board.super_new(), bag: new_super_bag())
+  def new("super:" <> _ = name, players: players) do
+    new(name, players: players, board: ScrabbleEx.Board.super_new(), bag: new_super_bag())
   end
 
-  def new(_id, players: players) do
-    new(players: players)
+  def new(name, players: players) do
+    new(name, players: players, board: ScrabbleEx.Board.new())
   end
 
-  def new(players: players) do
-    new(players: players, board: ScrabbleEx.Board.new())
+  def new(name, players: players, board: board) do
+    new(name, players: players, board: board, bag: new_bag())
   end
 
-  def new(players: players, board: board) do
-    new(players: players, board: board, bag: new_bag())
-  end
-
-  def new(players: players, board: board, bag: bag) do
+  def new(name, players: players, board: board, bag: bag) do
     %__MODULE__{
       players: players,
       current_player: nil,
@@ -33,7 +29,8 @@ defmodule ScrabbleEx.Game do
       log: [],
       bag: bag,
       scores: players |> Enum.map(&{&1, []}) |> Enum.into(%{}),
-      racks: players |> Enum.map(&{&1, []}) |> Enum.into(%{})
+      racks: players |> Enum.map(&{&1, []}) |> Enum.into(%{}),
+      name: name
     }
     |> fill_racks
   end
