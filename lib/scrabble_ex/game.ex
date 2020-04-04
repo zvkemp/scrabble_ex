@@ -447,6 +447,7 @@ defmodule ScrabbleEx.Game do
     merge(game, %{racks: new_racks, bag: new_lc})
   end
 
+  # FIXME: subtract remaining tiles from scores
   defp check_game_over(%Game{racks: racks} = game) do
     game_over = Enum.any?(racks, fn {_player, rack} -> Enum.empty?(rack) end)
     put(game, :game_over, game_over)

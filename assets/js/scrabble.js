@@ -91,11 +91,17 @@ class Scrabble {
     this.scores = payload.scores;
     this.players = payload.players;
 
+    this.gameOver = payload.game_over;
+
+    if (this.gameOver) {
+      this.current_player = null;
+      this.flash("info", { message: "game over!" });
+    }
+
     this.drawSquares();
     this.drawScores();
     this.drawStartButton();
     this.drawSwapButton();
-    this.gameOver = payload.gameOver;
   }
 
   handleRack(payload) {
@@ -461,6 +467,10 @@ class Scrabble {
   }
 
   drawStartButton() {
+    if (this.gameOver) {
+      return;
+    }
+
     let data = [];
     if (!this.current_player) {
       data.push(0);
