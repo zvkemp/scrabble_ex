@@ -2,14 +2,16 @@
 <meta name="player", content="<%= @player %>" />
 <meta name="game-id", content="<%= @game_id %>" />
 
-<section class="flash-container">
-  <p class="alert alert-info"></p>
+<section id="game-container">
+  <section class="flash-container">
+    <p class="alert alert-info"></p>
+  </section>
+  <section class="board-header">
+  </section>
+  <section class="board-container">
+  </section>
 </section>
-<section class="board-header">
-</section>
-<section class="board-container">
-</section>
-<section class="rack-container">
+<section id="rack-container">
   <div class="rack-square tile">S</div>
   <div class="rack-square tile">C</div>
   <div class="rack-square tile">R</div>

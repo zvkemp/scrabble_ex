@@ -1,9 +1,6 @@
 // Import the D3 packages we want to use
-import { scaleLinear } from 'd3-scale'
-import { select } from 'd3-selection'
-import { extent, ascending } from 'd3-array'
-import { transition } from 'd3-transition'
-import { easeCubicInOut } from 'd3-ease'
+import { select } from 'd3-selection';
+import Rack from './rack';
 
 class Scrabble {
   // FIXME: player sort rack
@@ -29,6 +26,8 @@ class Scrabble {
     this.proposed = {};
     this.scores = {};
     this.players = [];
+
+    this._rack = new Rack(this, "#rack-container", []);
 
     this.joinGameAs(this.token, this.name);
   }
@@ -100,6 +99,7 @@ class Scrabble {
     this.drawSquares();
     this.drawScores();
     this.drawStartButton();
+    this.drawSubmitButton();
     this.drawSwapButton();
   }
 
@@ -113,20 +113,8 @@ class Scrabble {
     return this._rack;
   }
 
-  pushRack(char) {
-    if (char[0] === ":") {
-      this.rack.push("BLANK")
-    } else {
-      this.rack.push(char)
-    }
-
-    this.drawRack();
-  }
-
   set rack(newRack) {
-    // FIXME: use a proxy to draw on push as well?
-    this._rack = newRack;
-    this.drawRack();
+    this._rack.letters = newRack;
   }
 
   didReceiveAttrs() {
@@ -138,10 +126,13 @@ class Scrabble {
     let component = this;
     // FIXME: where to put
     select(window).on('keydown', function() {
+      if (component.rack.hasFocus()) {
+        return component.rack.handleKeydown(event);
+      }
+
       if (component.player !== component.current_player) {
         return;
       }
-      // console.info(event, event.key, event.which);
 
       if (event.ctrlKey) {
         return;
@@ -178,6 +169,11 @@ class Scrabble {
         component.setProposed(String.fromCharCode(event.which));
       }
     });
+  }
+
+  unfocus() {
+    this.setCursor(undefined);
+    this.drawSquares(); // FIXME: only if cursor changes
   }
 
   moveByArrow(dx, dy) {
@@ -264,31 +260,28 @@ class Scrabble {
     let d = this.proposed[cursor];
     delete this.proposed[cursor];
     if (d) {
-      this.pushRack(d);
+      this.rack.replaceUsedLetter(d);
     }
-    console.info(d);
     this.sendProposed();
   }
 
   updateProposed(cursor, char) {
     let current = this.proposed[cursor]
     let usingBlank = false;
-    let i = this.rack.indexOf(char);
-    if (i < 0) {
-      i = this.rack.indexOf("BLANK");
+    let i = this.rack.searchUnusedLetter(char);
 
-      if (i < 0) { return false }
-      usingBlank = true;
+    if (!i) {
+      return
     }
 
-    this.rack.splice(i, 1);
+    usingBlank = i === "BLANK";
+
     if (current) {
-      this.pushRack(current);
+      this.rack.replaceUsedLetter(current);
     }
 
     this.proposed[cursor] = `${usingBlank ? ":" : ""}${char}`
     this.sendProposed();
-    this.drawRack();
 
     return true;
   }
@@ -301,8 +294,8 @@ class Scrabble {
     this.channel.push("proposed", this.proposed);
   }
 
-  sendSwapped(str) {
-    this.channel.push("swap", str);
+  sendSwapped() {
+    this.channel.push("swap", this.proposed);
   }
 
   clickSetCursor(i) {
@@ -316,15 +309,19 @@ class Scrabble {
     }
 
     this.setCursor(i);
+    this.rack.unfocus();
   }
 
   setCursor(i) {
     let tile = select(`#tile-${this.cursor}`);
     tile.classed('cursor', false);
     this.cursor = i;
-    tile = select(`#tile-${this.cursor}`);
-    tile.classed('cursor', true);
-    tile.classed('cursor-h', this.direction === "h");
+
+    if (i !== undefined) {
+      tile = select(`#tile-${this.cursor}`);
+      tile.classed('cursor', true);
+      tile.classed('cursor-h', this.direction === "h");
+    }
   }
 
   advanceCursor() {
@@ -390,24 +387,20 @@ class Scrabble {
     squares.exit().remove();
   }
 
-  drawRack() {
-    let container = this.rack_container;
-    let squares = container.selectAll('div.rack-square').data(this.rack);
-    let enterJoin = squares
-      .enter()
-      .append('div')
-      .attr('class', 'rack-square tile')
+  drawSubmitButton() {
+    let data = [];
+    if (this.player === this.current_player) {
+      data.push(0);
+    }
 
-    let currentSquares = squares.merge(enterJoin);
-    currentSquares.html(d => d === "BLANK" ? "" : d);
-    squares.exit().remove();
-
-    let button = select('#submit-button-container').selectAll('button.submit-button').data([1]);
+    let button = select('#submit-button-container').selectAll('button.submit-button').data(data);
     button.enter()
       .append('button')
       .attr('class', 'submit-button')
       .html('SUBMIT')
       .on("click", () => { this.submitProposed() });
+
+    button.exit().remove();
   }
 
   drawScores() {
@@ -502,14 +495,18 @@ class Scrabble {
     let selection = select('#submit-button-container').selectAll('button#swap-button').data(data);
 
     let component = this;
+    // FIXME: click to select swap tiles
     selection.enter()
       .append('button')
       .attr('id', 'swap-button')
       .html("SWAP")
       .on('click', () => {
-        let response = window.prompt("please enter letters to swap, separated by spaces. Enter BLANK to swap a blank.");
-        if (response) {
-          component.sendSwapped(response);
+        if (Object.keys(component.proposed).length === 0) {
+          alert("Type the letters you want to swap somewhere into the board, then click the swap button again.");
+        } else {
+          if (confirm("The letters you have typed into the board will be swapped. Proceed?")) {
+            component.sendSwapped();
+          }
         }
       });
 
@@ -517,4 +514,4 @@ class Scrabble {
   }
 }
 
-export default Scrabble
+export default Scrabble;

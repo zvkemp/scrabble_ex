@@ -79,8 +79,8 @@ defmodule ScrabbleEx.GameServer do
     end
   end
 
-  def handle_call({:swap, player, string}, _from, game) do
-    case Game.swap(game, player, string) do
+  def handle_call({:swap, player, letter_map}, _from, game) do
+    case Game.swap(game, player, letter_map) do
       {:ok, new_game} -> {:reply, {:ok, new_game}, save_state(new_game)}
       {:error, _msg} = e -> {:reply, e, game}
     end

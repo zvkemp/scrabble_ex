@@ -244,9 +244,20 @@ defmodule ScrabbleEx.Game do
     play(game, player, %{})
   end
 
-  def swap(%Game{} = game, player, str) do
-    swapped = str |> String.upcase() |> String.split(~r/\s+/, trim: true)
+  def swap(game, player, letter_map) when is_map(letter_map) do
+    swap(
+      game,
+      player,
+      Map.values(letter_map) |> Enum.map(&normalize_blank/1)
+    )
+  end
 
+  def swap(%Game{} = game, player, str) when is_binary(str) do
+    swapped = str |> String.upcase() |> String.split(~r/\s+/, trim: true)
+    swap(game, player, swapped)
+  end
+
+  def swap(%Game{} = game, player, swapped) when is_list(swapped) do
     with :ok <- validate_swap(game, player, swapped),
          :ok <- validate_swappability(game) do
       count = swapped |> Enum.count()

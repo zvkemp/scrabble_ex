@@ -62,11 +62,11 @@ defmodule ScrabbleExWeb.GameChannel do
     {:noreply, socket}
   end
 
-  def handle_in("swap", payload, socket) when is_binary(payload) do
+  def handle_in("swap", payload, socket) do
     case call(socket, {:swap, socket.assigns.player, payload}) do
       {:ok, game} ->
         push_rack(socket, game)
-        broadcast!(socket, "state", game)
+        broadcast_game_state(socket, game, "#{socket.assigns.player} swapped #{payload |> Enum.count} tiles.")
 
       {:error, msg} ->
         push(socket, "error", %{message: msg})
@@ -81,12 +81,7 @@ defmodule ScrabbleExWeb.GameChannel do
 
     case call(socket, {:play, socket.assigns.player, payload}) do
       {:ok, game} ->
-        letters_left = Enum.count(game.bag)
-        player = game.current_player
-        inflection = if letters_left == 1, do: "letter", else: "letters"
-        msg = "#{letters_left} #{inflection} left in bag. #{player}'s turn."
-        broadcast!(socket, "state", game)
-        broadcast!(socket, "info", %{message: msg})
+        broadcast_game_state(socket, game)
         push_rack(socket, game)
       {:error, msg} ->
         push(socket, "error", %{message: msg})
@@ -118,5 +113,17 @@ defmodule ScrabbleExWeb.GameChannel do
 
   defp push_rack(socket) do
     push_rack(socket, call(socket, :state))
+  end
+
+  defp broadcast_game_state(socket, game, additional_msg \\ nil) do
+    letters_left = Enum.count(game.bag)
+    player = game.current_player
+    inflection = if letters_left == 1, do: "letter", else: "letters"
+    msg = "#{letters_left} #{inflection} left in bag. #{player}'s turn."
+
+    msg = if additional_msg, do: "#{additional_msg} #{msg}", else: msg
+
+    broadcast!(socket, "state", game)
+    broadcast!(socket, "info", %{message: msg})
   end
 end

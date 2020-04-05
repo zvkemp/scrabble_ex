@@ -21,4 +21,7 @@ window.socket = socket;
 window.Scrabble = Scrabble;
 
 let scrabble = new Scrabble(socket);
-// scrabble.drawSquares();
+
+// let rack = new Rack('#rack-container', ['A', 'B', 'C', 'D', 'E', 'F', 'G']);
+
+// window.rack = rack

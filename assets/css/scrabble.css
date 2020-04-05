@@ -2,6 +2,9 @@
   width: 400px;
 }
 
+.game-container {
+  width: fit-content;
+}
 .board-container {
   display: grid;
   width: fit-content;
@@ -14,7 +17,12 @@
   padding: 4px;
 }
 
-.board-container, .rack-container {
+.flash-container .alert {
+  font-size: 9pt;
+  padding: 1em;
+}
+
+.board-container, #rack-container {
   -webkit-touch-callout: none; 
   -webkit-user-select: none; 
   -khtml-user-select: none;
@@ -32,9 +40,9 @@
   border-color: green;
 }
 
-.rack-container {
+#rack-container {
   display: grid;
-  grid-template-columns: repeat(8, 40px);
+  grid-template-columns: repeat(14, 40px);
   grid-template-rows: repeat(1, 40px);
   grid-gap: 2px;
   max-width: 600px;
@@ -78,6 +86,12 @@
   border: none;
   border-radius: 4px;
 }
+
+.rack-square.tile.empty {
+  border: 1px dotted gray;
+  background-color: white;
+}
+
 .board-square.tile-proposed {
   background-color: tan;
   color: green;
@@ -91,6 +105,15 @@
 .board-square.cursor {
   border: 2px solid red;
   border-bottom: 3px solid green;
+}
+
+.rack-square.tile.cursor {
+  border: 2px solid red;
+}
+
+.rack-square.tile.used {
+  background-color: white;
+  border: 1px dotted black;
 }
 
 .board-square.cursor.cursor-h {
