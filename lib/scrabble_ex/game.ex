@@ -27,7 +27,7 @@ defmodule ScrabbleEx.Game do
       any?: 2
     ]
 
-  @derive {Jason.Encoder, only: [:board, :scores, :current_player, :players, :game_over]}
+  # @derive {Jason.Encoder, only: [:board, :scores, :current_player, :players, :game_over]}
   defstruct [
     :board,
     :players,
@@ -38,8 +38,28 @@ defmodule ScrabbleEx.Game do
     :current_player,
     :pkid,
     :name,
-    :game_over
+    :game_over,
+    :pass_count
   ]
+
+  defimpl Jason.Encoder, for: [__MODULE__] do
+    def encode(struct, opts) do
+      Jason.Encode.map(
+        %{
+          board: struct.board,
+          scores: struct.scores,
+          current_player: struct.current_player,
+          players: struct.players,
+          game_over: struct.game_over,
+          swap_allowed: Game.swap_allowed?(struct),
+          pass_allowed: Game.pass_allowed?(struct),
+          bag_count: Enum.count(struct.bag),
+          pass_count: struct.pass_count
+        },
+        opts
+      )
+    end
+  end
 
   def new("super:" <> _ = name, players: players) do
     new(name, players: players, board: Board.super_new(), bag: new_super_bag())
@@ -63,7 +83,8 @@ defmodule ScrabbleEx.Game do
       scores: players |> map(&{&1, []}) |> into(%{}),
       racks: players |> map(&{&1, []}) |> into(%{}),
       name: name,
-      game_over: false
+      game_over: false,
+      pass_count: 0
     }
     |> fill_racks
   end
@@ -126,6 +147,28 @@ defmodule ScrabbleEx.Game do
     "Y" => 4,
     "Z" => 2,
     "BLANK" => 4
+  }
+
+  @mini_counts %{
+    "A" => 3,
+    "B" => 1,
+    "C" => 1,
+    "D" => 1,
+    "E" => 5,
+    "H" => 1,
+    "I" => 2,
+    "K" => 1,
+    "L" => 1,
+    "M" => 1,
+    "N" => 2,
+    "O" => 2,
+    "R" => 2,
+    "S" => 2,
+    "T" => 3,
+    "U" => 1,
+    "V" => 3,
+    "X" => 1,
+    "BLANK" => 2
   }
 
   def add_player(%Game{current_player: p}) when is_binary(p) do
@@ -249,7 +292,8 @@ defmodule ScrabbleEx.Game do
          log: [[player, letter_map] | log],
          board: new_board,
          scores: new_scores,
-         racks: new_racks
+         racks: new_racks,
+         pass_count: 0, # reset pass count if someone has played
        })
        |> fill_racks
        |> next_player
@@ -259,8 +303,26 @@ defmodule ScrabbleEx.Game do
     end
   end
 
+  def pass(%Game{game_over: true} = game, player) do
+    play(game, player, %{})
+  end
+
   def swap(%Game{game_over: true} = game, player, _str) do
     play(game, player, %{})
+  end
+
+  def pass(game, player) do
+    if pass_allowed?(game) do
+      {:ok,
+        game
+        |> Map.update(:pass_count, 1, &(&1 + 1))
+        |> IO.inspect
+        |> next_player
+        |> check_game_over
+      }
+    else
+      {:error, "passing is not allowed"}
+    end
   end
 
   def swap(game, player, letter_map) when is_map(letter_map) do
@@ -507,7 +569,35 @@ defmodule ScrabbleEx.Game do
 
   # FIXME: subtract remaining tiles from scores
   defp check_game_over(%Game{racks: racks} = game) do
-    game_over = any?(racks, fn {_player, rack} -> empty?(rack) end)
-    put(game, :game_over, game_over)
+    if any?(racks, fn {_player, rack} -> empty?(rack) end) ||
+      (game.pass_count && game.pass_count > count(game.players) * 2) do
+      game
+      |> put(:game_over, true)
+      |> subtract_remaining_tiles
+    else
+      game
+    end
+  end
+
+  defp subtract_remaining_tiles(game) do
+    new_scores =
+      game.racks
+      |> reduce(game.scores, fn {player, rack}, scores ->
+        total = Score.score_rack(rack)
+        update(scores, player, [], &[[["remaining tiles", -total]] | &1])
+      end)
+
+    put(game, :scores, new_scores)
+  end
+
+  def swap_allowed?(game) do
+    case validate_swappability(game) do
+      :ok -> true
+      _ -> false
+    end
+  end
+
+  def pass_allowed?(game) do
+    !swap_allowed?(game)
   end
 end

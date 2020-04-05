@@ -41,6 +41,10 @@ defmodule ScrabbleEx.Score do
     end
   end
 
+  def score_rack(rack) do
+    Enum.reduce(rack, 0, &(&2 + value(&1)))
+  end
+
   defp validate_words({:ok, words_with_scores}) do
     real_words =
       Enum.reduce(words_with_scores, %{}, fn [word, _], acc ->

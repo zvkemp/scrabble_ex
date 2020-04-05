@@ -84,6 +84,21 @@ defmodule ScrabbleExWeb.GameChannel do
     {:noreply, socket}
   end
 
+  def handle_in("pass", payload, socket) do
+    case call(socket, {:pass, socket.assigns.player}) do
+      {:ok, game} ->
+        broadcast_game_state(
+          socket,
+          game,
+          "#{socket.assigns.player} passed."
+        )
+      {:error, msg} ->
+        push(socket, "error", %{message: msg})
+    end
+
+    {:noreply, socket}
+  end
+
   # FIXME: rename "submit_payload" => "play"
   def handle_in("submit_payload", payload, socket) do
     payload = Enum.map(payload, fn {k, v} -> {String.to_integer(k), v} end) |> Enum.into(%{})

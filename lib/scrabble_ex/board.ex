@@ -19,6 +19,10 @@ defmodule ScrabbleEx.Board do
     defp map_term(c) when is_binary(c), do: %{character: c}
   end
 
+  def mini_str do
+    # FIXME
+  end
+
   def standard_str do
     "3w .  .  2l .  .  .  3w .  .  .  2l .  .  3w " <>
       ".  2w .  .  .  3l .  .  .  3l .  .  .  2w .  " <>

@@ -86,6 +86,14 @@ defmodule ScrabbleEx.GameServer do
     end
   end
 
+  # FIXME: refactor this
+  def handle_call({:pass, player}, _from, game) do
+    case Game.pass(game, player) do
+      {:ok, new_game} -> {:reply, {:ok, new_game}, save_state(new_game)}
+      {:error, _msg} = e -> {:reply, e, game}
+    end
+  end
+
   def handle_call({:play, player, payload}, _from, game) do
     case Game.play(game, player, payload) do
       {:ok, new_game} -> {:reply, {:ok, new_game}, save_state(new_game)}

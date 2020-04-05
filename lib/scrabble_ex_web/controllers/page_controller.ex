@@ -44,11 +44,11 @@ defmodule ScrabbleExWeb.PageController do
         _ -> :error
       end
 
-
-    name = case name do
-      "" -> :crypto.strong_rand_bytes(16) |> Base.encode64
-      _ -> name
-    end
+    name =
+      case name do
+        "" -> :crypto.strong_rand_bytes(16) |> Base.encode64()
+        _ -> name
+      end
 
     name = "#{board}:#{Inflex.parameterize_to_ascii(name)}"
 

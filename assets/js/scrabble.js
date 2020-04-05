@@ -82,6 +82,8 @@ class Scrabble {
     this.players = payload.players;
 
     this.gameOver = payload.game_over;
+    this.passAllowed = payload.pass_allowed;
+    this.swapAllowed = payload.swap_allowed;
 
     if (this.gameOver) {
       this.current_player = null;
@@ -93,6 +95,7 @@ class Scrabble {
     this.drawStartButton();
     this.drawSubmitButton();
     this.drawSwapButton();
+    this.drawPassButton();
   }
 
   handleRack(payload) {
@@ -284,6 +287,10 @@ class Scrabble {
     this.channel.push("swap", this.proposed);
   }
 
+  sendPassed() {
+    this.channel.push("pass", {});
+  }
+
   clickSetCursor(i) {
     let tile = select(`#tile-${this.cursor}`);
     if (this.cursor === i) {
@@ -472,9 +479,29 @@ class Scrabble {
     selection.exit().remove();
   }
 
+  drawPassButton() {
+    let data = [];
+    if (this.passAllowed && this.current_player === this.player) {
+      data.push(0);
+    }
+    let selection = select('#submit-button-container').selectAll('button#pass-button').data(data);
+    let component = this;
+    selection.enter()
+      .append('button')
+      .attr('id', 'pass-button')
+      .html("PASS")
+      .on('click', () => {
+        if (confirm("Your turn will be over. Proceed?")) {
+          component.sendPassed();
+        }
+      });
+
+    selection.exit().remove();
+  }
+
   drawSwapButton() {
     let data = [];
-    if (this.current_player === this.player) {
+    if (this.swapAllowed && this.current_player === this.player) {
       data.push(0);
     }
 

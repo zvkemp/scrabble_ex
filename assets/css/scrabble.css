@@ -129,10 +129,10 @@ th.is-player {
   border: 1px solid gray;
 }
 
-#swap-button, .submit-button {
+#swap-button, #pass-button, .submit-button {
   margin-left: 10px;
 }
 
-#swap-button {
+#swap-button, #pass-button {
   background-color: indianred;
 }
