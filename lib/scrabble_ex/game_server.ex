@@ -65,37 +65,31 @@ defmodule ScrabbleEx.GameServer do
   end
 
   def handle_call({:add_player, player}, _from, game) do
-    # IO.inspect("add_player: #{player}")
-    case Game.add_player(game, player) do
-      {:ok, new_game} -> {:reply, {:ok, game}, save_state(new_game)}
-      {:error, msg} -> {:reply, {:error, msg}, game}
-    end
+    apply_game_fn(:add_player, [player], game)
   end
 
   def handle_call(:start_game, _from, game) do
-    case Game.start(game) do
-      {:ok, new_game} -> {:reply, {:ok, new_game}, save_state(new_game)}
-      {:error, _msg} = e -> {:reply, e, game}
-    end
+    apply_game_fn(:start, [], game) # FIXME: standardize name of fn
   end
 
   def handle_call({:swap, player, letter_map}, _from, game) do
-    case Game.swap(game, player, letter_map) do
-      {:ok, new_game} -> {:reply, {:ok, new_game}, save_state(new_game)}
-      {:error, _msg} = e -> {:reply, e, game}
-    end
+    apply_game_fn(:swap, [player, letter_map], game)
   end
 
-  # FIXME: refactor this
   def handle_call({:pass, player}, _from, game) do
-    case Game.pass(game, player) do
-      {:ok, new_game} -> {:reply, {:ok, new_game}, save_state(new_game)}
-      {:error, _msg} = e -> {:reply, e, game}
-    end
+    apply_game_fn(:pass, [player], game)
   end
 
   def handle_call({:play, player, payload}, _from, game) do
-    case Game.play(game, player, payload) do
+    apply_game_fn(:play, [player, payload], game)
+  end
+
+  def handle_call({:game_fn, fn_name, args}, _from, game) do
+    apply_game_fn(fn_name, args, game)
+  end
+
+  defp apply_game_fn(name, args, game) do
+    case apply(Game, name, [game|args]) do
       {:ok, new_game} -> {:reply, {:ok, new_game}, save_state(new_game)}
       {:error, _msg} = e -> {:reply, e, game}
     end

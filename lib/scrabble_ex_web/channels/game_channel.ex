@@ -40,18 +40,17 @@ defmodule ScrabbleExWeb.GameChannel do
     {:noreply, socket}
   end
 
-  # FIXME: this probably shouldn't be broadcast, as it can reveal letters
-  # in a player's rack
-  # or maybe that makes it more real?
+  # FIXME: make this broadcast a game option
+  # FIXME: show player the proposed score
   def handle_in("proposed", payload, socket) do
     game = call(socket, :state)
 
     if game.current_player == socket.assigns.player do
-      # case ScrabbleEx.Game.propose(game, socket.assigns.player, payload) do
-      #   {:ok, scores} -> push(socket, "error", %{scores: scores})
-      #   {:error, m} = e -> push(socket, "error", %{reason: m})
-      # end
-      broadcast!(socket, "new_proposed", payload)
+      case ScrabbleEx.Game.propose(game, socket.assigns.player, payload) do
+        {:ok, scores} -> push(socket, "info", %{message: scores |> IO.inspect |> Enum.map(&Enum.join(&1, ",")) |> Enum.join(" ")})
+        {:error, m} = e -> push(socket, "error", %{message: m})
+      end
+      # broadcast!(socket, "new_proposed", payload)
     end
 
     {:noreply, socket}

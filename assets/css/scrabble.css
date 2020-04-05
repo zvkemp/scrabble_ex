@@ -22,6 +22,10 @@
   padding: 1em;
 }
 
+.flash-container .alert:empty {
+  display: block;
+}
+
 .board-container, #rack-container {
   -webkit-touch-callout: none; 
   -webkit-user-select: none; 

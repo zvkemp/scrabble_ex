@@ -59,6 +59,8 @@ class Scrabble {
   }
 
   flash(level, { message }) {
+    message = message || "&nbsp;"
+    console.info(message);
     this.flash_container.html(message);
     this.flash_container.classed("alert-danger", level === "error");
   }

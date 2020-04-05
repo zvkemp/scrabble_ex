@@ -276,7 +276,7 @@ defmodule ScrabbleEx.Game do
 
     with :ok <- validate_play(turn, game),
          {:ok, new_board} <- Board.merge_and_validate(board, letter_map),
-         {:ok, score} <- Score.score(board, new_board, letter_map, first_turn) do
+         {:ok, score} <- Score.valid_score(board, new_board, letter_map, first_turn) do
       new_scores = update(scores, player, [score], fn xs -> [score | xs] end)
       # remove played letters
       new_racks =

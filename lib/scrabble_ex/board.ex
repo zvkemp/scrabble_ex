@@ -106,6 +106,7 @@ defmodule ScrabbleEx.Board do
     new(21, parsed_super())
   end
 
+  # FIXME: this doesn't validate
   def merge_and_validate(board, letter_map) do
     new_state = Map.merge(board.state, letter_map)
     new_board = %{board | state: new_state}

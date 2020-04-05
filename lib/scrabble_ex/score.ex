@@ -37,7 +37,14 @@ defmodule ScrabbleEx.Score do
           scores
         end
 
-      {:ok, scores} |> validate_words
+      {:ok, scores}
+    end
+  end
+
+  def valid_score(board, new_board, letter_map, first_turn \\ false) do
+    case score(board, new_board, letter_map, first_turn) do
+      {:ok, _} = scores -> validate_words(scores)
+      {:error, _} = e -> e
     end
   end
 
