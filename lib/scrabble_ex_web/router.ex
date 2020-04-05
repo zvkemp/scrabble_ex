@@ -16,7 +16,6 @@ defmodule ScrabbleExWeb.Router do
   scope "/", ScrabbleExWeb do
     pipe_through [:browser, ScrabbleExWeb.Plugs.Guest]
 
-
     get "/login", LoginController, :new
     post "/login", LoginController, :create
     resources "/register", UserController, only: [:create, :new]

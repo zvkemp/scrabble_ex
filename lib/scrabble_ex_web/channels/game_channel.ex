@@ -70,7 +70,12 @@ defmodule ScrabbleExWeb.GameChannel do
     case call(socket, {:swap, socket.assigns.player, payload}) do
       {:ok, game} ->
         push_rack(socket, game)
-        broadcast_game_state(socket, game, "#{socket.assigns.player} swapped #{payload |> Enum.count} tiles.")
+
+        broadcast_game_state(
+          socket,
+          game,
+          "#{socket.assigns.player} swapped #{payload |> Enum.count()} tiles."
+        )
 
       {:error, msg} ->
         push(socket, "error", %{message: msg})
@@ -87,6 +92,7 @@ defmodule ScrabbleExWeb.GameChannel do
       {:ok, game} ->
         broadcast_game_state(socket, game)
         push_rack(socket, game)
+
       {:error, msg} ->
         push(socket, "error", %{message: msg})
     end

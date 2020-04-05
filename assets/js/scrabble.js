@@ -3,11 +3,6 @@ import { select } from 'd3-selection';
 import Rack from './rack';
 
 class Scrabble {
-  // FIXME: player sort rack
-
-  // Array of points to render as circles in a line, spaced by time.
-
-  //  [ {value: Number, timestamp: Number } ];
   constructor(socket) {
     window.game = this
     this.token = select("meta[name='id-token']").attr("content");
@@ -33,9 +28,6 @@ class Scrabble {
   }
 
   joinGameAs(token, name) {
-    // this.player = name;
-
-    // FIXME: get name from somewhere else
     this.channel = this.socket.channel(`game:${this.game_id}`, { token: token });
     window.channel = this.channel;
     this.channel.join()
@@ -118,13 +110,7 @@ class Scrabble {
   }
 
   didReceiveAttrs() {
-    // Schedule a call to our `drawCircles` method on Ember's "render" queue, which will
-    // happen after the component has been placed in the DOM, and subsequently
-    // each time data is changed.
-    // run.scheduleOnce('render', this, this.drawSquares)
-
     let component = this;
-    // FIXME: where to put
     select(window).on('keydown', function() {
       if (component.rack.hasFocus()) {
         return component.rack.handleKeydown(event);
@@ -495,7 +481,6 @@ class Scrabble {
     let selection = select('#submit-button-container').selectAll('button#swap-button').data(data);
 
     let component = this;
-    // FIXME: click to select swap tiles
     selection.enter()
       .append('button')
       .attr('id', 'swap-button')

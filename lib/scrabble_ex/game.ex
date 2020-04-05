@@ -3,10 +3,29 @@ defmodule ScrabbleEx.Game do
   # FIXME: lose a turn if you propose a non-word, or allow other players to vote
   # FIXME: pass turn (toward end of game) - allowed when fewer than 7 tiles remaining in bag
   # FIXME: subtract remaining letters when game ends
-  # FIXME: add 'letters left in bag' message
 
-  alias ScrabbleEx.{Game, Board}
-  import Map, only: [put: 3, merge: 2]
+  alias ScrabbleEx.{Game, Board, Score}
+  import Map, only: [put: 3, merge: 2, values: 1, has_key?: 2, update: 4, get: 2, keys: 1]
+
+  import Enum,
+    only: [
+      map: 2,
+      into: 2,
+      count: 1,
+      reduce: 3,
+      shuffle: 1,
+      empty?: 1,
+      take: 2,
+      drop: 2,
+      join: 2,
+      min: 1,
+      max: 1,
+      zip: 2,
+      all?: 2,
+      sort: 1,
+      uniq: 1,
+      any?: 2
+    ]
 
   @derive {Jason.Encoder, only: [:board, :scores, :current_player, :players, :game_over]}
   defstruct [
@@ -23,11 +42,11 @@ defmodule ScrabbleEx.Game do
   ]
 
   def new("super:" <> _ = name, players: players) do
-    new(name, players: players, board: ScrabbleEx.Board.super_new(), bag: new_super_bag())
+    new(name, players: players, board: Board.super_new(), bag: new_super_bag())
   end
 
   def new(name, players: players) do
-    new(name, players: players, board: ScrabbleEx.Board.new())
+    new(name, players: players, board: Board.new())
   end
 
   def new(name, players: players, board: board) do
@@ -41,8 +60,8 @@ defmodule ScrabbleEx.Game do
       board: board,
       log: [],
       bag: bag,
-      scores: players |> Enum.map(&{&1, []}) |> Enum.into(%{}),
-      racks: players |> Enum.map(&{&1, []}) |> Enum.into(%{}),
+      scores: players |> map(&{&1, []}) |> into(%{}),
+      racks: players |> map(&{&1, []}) |> into(%{}),
       name: name,
       game_over: false
     }
@@ -114,7 +133,7 @@ defmodule ScrabbleEx.Game do
   end
 
   def add_player(%Game{} = game, player) do
-    case Map.has_key?(game.racks, player) do
+    case has_key?(game.racks, player) do
       false ->
         new_players = game.players ++ [player]
         new_scores = game.scores |> put(player, [])
@@ -143,14 +162,14 @@ defmodule ScrabbleEx.Game do
   end
 
   def next_player(%Game{} = game) do
-    count = game.players |> Enum.count()
+    count = game.players |> count()
     idx = index_of_player(game.players, game.current_player)
     next_player(game, rem(idx + 1, count))
   end
 
   defp index_of_player(players, player) do
     Enum.with_index(players)
-    |> Enum.reduce(0, fn
+    |> reduce(0, fn
       {^player, idx}, _acc -> idx
       _, acc -> acc
     end)
@@ -173,7 +192,7 @@ defmodule ScrabbleEx.Game do
     |> Enum.flat_map(fn {c, n} ->
       Stream.cycle([c]) |> Enum.take(n)
     end)
-    |> Enum.shuffle()
+    |> shuffle()
   end
 
   defmodule Turn do
@@ -187,12 +206,12 @@ defmodule ScrabbleEx.Game do
         letter_map
       ) do
     letter_map = normalize_map(letter_map, board.size)
-    first_turn = Enum.empty?(log)
+    first_turn = empty?(log)
     turn = %Turn{player: player, letter_map: letter_map}
 
     with :ok <- validate_play(turn, game),
          {:ok, new_board} <- Board.merge_and_validate(board, letter_map),
-         {:ok, score} <- ScrabbleEx.Score.score(board, new_board, letter_map, first_turn) do
+         {:ok, score} <- Score.score(board, new_board, letter_map, first_turn) do
       {:ok, score}
     else
       {:error, _msg} = e -> e
@@ -209,19 +228,19 @@ defmodule ScrabbleEx.Game do
         letter_map
       ) do
     letter_map = normalize_map(letter_map, board.size)
-    first_turn = Enum.empty?(log)
+    first_turn = empty?(log)
     turn = %Turn{player: player, letter_map: letter_map}
 
     with :ok <- validate_play(turn, game),
          {:ok, new_board} <- Board.merge_and_validate(board, letter_map),
-         {:ok, score} <- ScrabbleEx.Score.score(board, new_board, letter_map, first_turn) do
-      new_scores = Map.update(scores, player, [score], fn xs -> [score | xs] end)
+         {:ok, score} <- Score.score(board, new_board, letter_map, first_turn) do
+      new_scores = update(scores, player, [score], fn xs -> [score | xs] end)
       # remove played letters
       new_racks =
-        Map.put(
+        put(
           game.racks,
           player,
-          game.racks[player] -- (Map.values(letter_map) |> Enum.map(&normalize_blank/1))
+          game.racks[player] -- (values(letter_map) |> map(&normalize_blank/1))
         )
 
       {:ok,
@@ -248,7 +267,7 @@ defmodule ScrabbleEx.Game do
     swap(
       game,
       player,
-      Map.values(letter_map) |> Enum.map(&normalize_blank/1)
+      values(letter_map) |> map(&normalize_blank/1)
     )
   end
 
@@ -260,12 +279,12 @@ defmodule ScrabbleEx.Game do
   def swap(%Game{} = game, player, swapped) when is_list(swapped) do
     with :ok <- validate_swap(game, player, swapped),
          :ok <- validate_swappability(game) do
-      count = swapped |> Enum.count()
-      new_tiles = game.bag |> Enum.take(count)
+      count = swapped |> count()
+      new_tiles = game.bag |> take(count)
       new_rack = (game.racks[player] -- swapped) ++ new_tiles
 
-      new_bag = (Enum.drop(game.bag, count) ++ swapped) |> Enum.shuffle()
-      new_racks = Map.put(game.racks, player, new_rack)
+      new_bag = (drop(game.bag, count) ++ swapped) |> shuffle()
+      new_racks = put(game.racks, player, new_rack)
 
       new_game =
         game
@@ -279,7 +298,7 @@ defmodule ScrabbleEx.Game do
   end
 
   defp validate_swappability(%Game{bag: bag}) do
-    if Enum.count(bag) >= 7 do
+    if count(bag) >= 7 do
       :ok
     else
       {:error, "not enough tiles left in bag"}
@@ -297,11 +316,11 @@ defmodule ScrabbleEx.Game do
 
   defp normalize_map(letter_map, size) do
     letter_map
-    |> Enum.map(fn
+    |> map(fn
       {{x, y}, v} -> {to_index(x, y, size), v}
       {x, v} -> {parse_int(x), v |> upcase()}
     end)
-    |> Enum.into(%{})
+    |> into(%{})
   end
 
   defp parse_int(x) when is_integer(x), do: x
@@ -357,18 +376,18 @@ defmodule ScrabbleEx.Game do
   end
 
   defp validate_player_has_tiles(%Turn{} = turn, %Game{racks: racks}) do
-    case (Map.values(turn.letter_map) |> Enum.map(&normalize_blank/1)) -- racks[turn.player] do
+    case (values(turn.letter_map) |> map(&normalize_blank/1)) -- racks[turn.player] do
       [] ->
         :ok
 
       _ ->
         {:error,
          "player does not have the goods; tried=#{
-           Map.values(turn.letter_map)
-           |> Enum.map(&normalize_blank/1)
-           |> Enum.join(" ")
+           values(turn.letter_map)
+           |> map(&normalize_blank/1)
+           |> join(" ")
            |> inspect
-         }; has=#{racks[turn.player] |> Enum.join(" ") |> inspect}"}
+         }; has=#{racks[turn.player] |> join(" ") |> inspect}"}
     end
   end
 
@@ -380,20 +399,20 @@ defmodule ScrabbleEx.Game do
     case direction(letter_map, board) do
       {:ok, :vertical, coords} ->
         [{x1, _} | _] = coords
-        ys = coords |> Enum.map(fn {_, y} -> y end)
-        y_min = Enum.min(ys)
-        y_max = Enum.max(ys)
+        ys = coords |> map(fn {_, y} -> y end)
+        y_min = min(ys)
+        y_max = max(ys)
 
-        coords = Stream.cycle([x1]) |> Enum.zip(y_min..y_max)
+        coords = Stream.cycle([x1]) |> zip(y_min..y_max)
         validate_coords_present(coords, letter_map, board)
 
       {:ok, :horizontal, coords} ->
         [{_, y1} | _] = coords
-        xs = coords |> Enum.map(fn {x, _} -> x end)
-        x_min = Enum.min(xs)
-        x_max = Enum.max(xs)
+        xs = coords |> map(fn {x, _} -> x end)
+        x_min = min(xs)
+        x_max = max(xs)
 
-        coords = x_min..x_max |> Enum.zip(Stream.cycle([y1]))
+        coords = x_min..x_max |> zip(Stream.cycle([y1]))
         validate_coords_present(coords, letter_map, board)
 
       {:error, _} = e ->
@@ -402,11 +421,11 @@ defmodule ScrabbleEx.Game do
   end
 
   defp validate_coords_present(coords, letter_map, board) do
-    coords = Enum.map(coords, &to_index(&1, board.size))
+    coords = map(coords, &to_index(&1, board.size))
 
-    if Enum.all?(coords, fn index ->
-         Map.has_key?(letter_map, index) ||
-           is_binary(Map.get(board.state, index))
+    if all?(coords, fn index ->
+         has_key?(letter_map, index) ||
+           is_binary(get(board.state, index))
        end) do
       :ok
     else
@@ -427,31 +446,30 @@ defmodule ScrabbleEx.Game do
     {x, y}
   end
 
-  # FIXME: single letter?
   defp direction(letter_map, board) do
     xc =
       letter_map
-      |> Map.keys()
-      |> Enum.map(&rem(&1, board.size))
-      |> Enum.sort()
+      |> keys()
+      |> map(&rem(&1, board.size))
+      |> sort()
 
     yc =
       letter_map
-      |> Map.keys()
-      |> Enum.map(&div(&1, board.size))
-      |> Enum.sort()
+      |> keys()
+      |> map(&div(&1, board.size))
+      |> sort()
 
     coords = List.zip([xc, yc])
 
     cond do
-      Enum.uniq(xc) |> Enum.count() == 1 -> {:ok, :vertical, coords}
-      Enum.uniq(yc) |> Enum.count() == 1 -> {:ok, :horizontal, coords}
+      uniq(xc) |> count() == 1 -> {:ok, :vertical, coords}
+      uniq(yc) |> count() == 1 -> {:ok, :horizontal, coords}
       true -> {:error, "word is not linear"}
     end
   end
 
   defp validate_length(letter_map, min) do
-    if letter_map |> Enum.count() >= min do
+    if letter_map |> count() >= min do
       :ok
     else
       {:error, "not long enough"}
@@ -461,7 +479,7 @@ defmodule ScrabbleEx.Game do
   defp validate_crosses_center(letter_map, board_size) do
     center_index = div(board_size, 2) * board_size + div(board_size, 2)
 
-    if letter_map |> Map.has_key?(center_index) do
+    if letter_map |> has_key?(center_index) do
       :ok
     else
       {:error, "does not cross center"}
@@ -470,17 +488,17 @@ defmodule ScrabbleEx.Game do
 
   defp fill_racks(%Game{players: players, bag: lc, racks: racks} = game) do
     {new_racks, new_lc} =
-      Enum.reduce(players, {racks, lc}, fn
+      reduce(players, {racks, lc}, fn
         _player, {racks, [] = lc} ->
           # empty, just continue
           {racks, lc}
 
         player, {racks, lc} ->
-          count_needed = 7 - Enum.count(racks[player])
+          count_needed = 7 - count(racks[player])
 
           {
-            Map.put(racks, player, Enum.take(lc, count_needed) ++ racks[player]),
-            Enum.drop(lc, count_needed)
+            put(racks, player, take(lc, count_needed) ++ racks[player]),
+            drop(lc, count_needed)
           }
       end)
 
@@ -489,7 +507,7 @@ defmodule ScrabbleEx.Game do
 
   # FIXME: subtract remaining tiles from scores
   defp check_game_over(%Game{racks: racks} = game) do
-    game_over = Enum.any?(racks, fn {_player, rack} -> Enum.empty?(rack) end)
+    game_over = any?(racks, fn {_player, rack} -> empty?(rack) end)
     put(game, :game_over, game_over)
   end
 end

@@ -10,6 +10,7 @@ database_url =
     environment variable DATABASE_URL is missing.
     For example: ecto://USER:PASS@HOST/DATABASE
     """
+
 config :scrabble_ex, ScrabbleEx.Repo,
   # ssl: true,
   url: database_url,

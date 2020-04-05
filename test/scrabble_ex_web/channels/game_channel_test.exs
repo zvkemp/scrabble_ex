@@ -3,6 +3,7 @@ defmodule ScrabbleExWeb.GameChannelTest do
   alias ScrabbleExWeb.GameChannel
   alias ScrabbleEx.GameServer
   alias ScrabbleEx.Game
+  alias ScrabbleEx.Players
   import ScrabbleExWeb.Endpoint, only: [signing_salt: 0]
 
   def rand_token do
@@ -10,11 +11,23 @@ defmodule ScrabbleExWeb.GameChannelTest do
     |> Base.encode64()
   end
 
+  def user_fixture(attrs \\ %{}) do
+    {:ok, user} =
+      attrs
+      |> Enum.into(%{})
+      |> Players.create_user()
+
+    user
+  end
+
   setup do
     start_game_server()
 
-    z_token = Phoenix.Token.sign(ScrabbleExWeb.Endpoint, signing_salt, {"zach", rand_token()})
-    k_token = Phoenix.Token.sign(ScrabbleExWeb.Endpoint, signing_salt, {"kate", rand_token()})
+    z_user = user_fixture(%{username: "zach"})
+    k_user = user_fixture(%{username: "kate"})
+
+    z_token = Phoenix.Token.sign(ScrabbleExWeb.Endpoint, signing_salt, z_user.id)
+    k_token = Phoenix.Token.sign(ScrabbleExWeb.Endpoint, signing_salt, k_user.id)
 
     {:ok, _, zach} =
       socket(ScrabbleExWeb.UserSocket)

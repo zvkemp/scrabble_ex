@@ -37,12 +37,17 @@ defmodule ScrabbleExWeb.PageController do
   end
 
   def create(conn, %{"game" => %{"name" => name, "board" => board}} = params) do
-    IO.inspect(params)
+    :ok =
+      case board do
+        "standard" -> :ok
+        "super" -> :ok
+        _ -> :error
+      end
 
-    :ok = case board do
-      "standard" -> :ok
-      "super" -> :ok
-      _ -> :error
+
+    name = case name do
+      "" -> :crypto.strong_rand_bytes(16) |> Base.encode64
+      _ -> name
     end
 
     name = "#{board}:#{Inflex.parameterize_to_ascii(name)}"
