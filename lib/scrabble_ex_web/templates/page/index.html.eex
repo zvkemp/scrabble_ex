@@ -1,4 +1,3 @@
-<%= form_for @conn, Routes.login_path(@conn, :new), [as: :login], fn f -> %>
-  <%= text_input f, :name, placeholder: "please enter your name" %>
-  <%= submit "go" %>
-<% end %>
+<section>
+  <h4>ScrabbleEx</h2>
+</section>

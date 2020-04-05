@@ -7,7 +7,8 @@ defmodule ScrabbleExWeb.Endpoint do
   @session_options [
     store: :cookie,
     key: "_scrabble_ex_key",
-    signing_salt: "Wf005m12"
+    signing_salt: "Wf005m12",
+    max_age: 60 * 60 * 24 * 365
   ]
 
   socket "/socket", ScrabbleExWeb.UserSocket,
@@ -44,4 +45,8 @@ defmodule ScrabbleExWeb.Endpoint do
   plug Plug.Head
   plug Plug.Session, @session_options
   plug ScrabbleExWeb.Router
+
+  def signing_salt do
+    @session_options[:signing_salt]
+  end
 end

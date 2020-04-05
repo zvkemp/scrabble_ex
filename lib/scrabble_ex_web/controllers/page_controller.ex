@@ -1,18 +1,15 @@
 defmodule ScrabbleExWeb.PageController do
   use ScrabbleExWeb, :controller
+  import ScrabbleExWeb.Endpoint, only: [signing_salt: 0]
 
   def index(conn, _params) do
-    if Map.has_key?(conn.cookies, "_scrabble_ex_identity") do
-      redirect(conn, to: page_path(:hello)) |> halt()
-    else
-      render(conn, "index.html")
-    end
+    render(conn, "index.html")
   end
 
   def show(conn, %{"id" => game_id}) do
     user = conn.assigns.current_user
     name = user.username
-    token = Phoenix.Token.sign(ScrabbleExWeb.Endpoint, "salt", {name, "FIXME-REMOVE-THIS-ARG"})
+    token = Phoenix.Token.sign(ScrabbleExWeb.Endpoint, signing_salt(), user.id)
 
     conn
     |> assign(:player, name)
@@ -37,5 +34,20 @@ defmodule ScrabbleExWeb.PageController do
       ScrabbleExWeb.Endpoint,
       action
     )
+  end
+
+  def create(conn, %{"game" => %{"name" => name, "board" => board}} = params) do
+    IO.inspect(params)
+
+    :ok = case board do
+      "standard" -> :ok
+      "super" -> :ok
+      _ -> :error
+    end
+
+    name = "#{board}:#{Inflex.parameterize_to_ascii(name)}"
+
+    conn
+    |> redirect(to: Routes.page_path(conn, :show, name))
   end
 end

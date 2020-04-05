@@ -1,1 +1,25 @@
-hello, <%= @player %>
+<h3>hello, <%= @player %>.</h3>
+
+<p>
+  To play a game, optionally enter its name here.
+</p>
+
+<p>
+  Share your game link with others. When everyone has joined, click 'start'.
+</p>
+
+<section>
+  <%= form_for @conn, Routes.page_path(@conn, :create), [as: :game], fn f -> %>
+    <%= text_input f, :name, placeholder: "name your game (optional)" %>
+    <label for="game_board_standard">
+      <%= radio_button(f, :board, "standard") %>
+      Standard Board
+    </label>
+
+    <label for="game_board_super">
+      <%= radio_button(f, :board, "super") %>
+      Super Board
+    </label>
+    <%= submit "go!", class: "btn right secondary-color" %>
+  <% end %>
+</section>

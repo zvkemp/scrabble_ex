@@ -10,18 +10,13 @@ import css from "../css/app.css"
 // Import dependencies
 //
 import "phoenix_html"
+import socket from "./socket"
+import Scrabble from "./scrabble"
 
 // Import local files
 //
 // Local files can be imported directly using relative paths, for example:
-import socket from "./socket"
-import Scrabble from "./scrabble"
-
-window.socket = socket;
-window.Scrabble = Scrabble;
-
-let scrabble = new Scrabble(socket);
-
-// let rack = new Rack('#rack-container', ['A', 'B', 'C', 'D', 'E', 'F', 'G']);
-
-// window.rack = rack
+if (document.querySelector('meta[name="id-token"]')) {
+  socket.connect();
+  const scrabble = new Scrabble(socket);
+}

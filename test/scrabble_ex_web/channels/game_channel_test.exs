@@ -3,6 +3,7 @@ defmodule ScrabbleExWeb.GameChannelTest do
   alias ScrabbleExWeb.GameChannel
   alias ScrabbleEx.GameServer
   alias ScrabbleEx.Game
+  import ScrabbleExWeb.Endpoint, only: [signing_salt: 0]
 
   def rand_token do
     :crypto.strong_rand_bytes(16)
@@ -12,8 +13,8 @@ defmodule ScrabbleExWeb.GameChannelTest do
   setup do
     start_game_server()
 
-    z_token = Phoenix.Token.sign(ScrabbleExWeb.Endpoint, "salt", {"zach", rand_token()})
-    k_token = Phoenix.Token.sign(ScrabbleExWeb.Endpoint, "salt", {"kate", rand_token()})
+    z_token = Phoenix.Token.sign(ScrabbleExWeb.Endpoint, signing_salt, {"zach", rand_token()})
+    k_token = Phoenix.Token.sign(ScrabbleExWeb.Endpoint, signing_salt, {"kate", rand_token()})
 
     {:ok, _, zach} =
       socket(ScrabbleExWeb.UserSocket)

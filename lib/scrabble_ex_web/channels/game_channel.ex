@@ -1,14 +1,18 @@
 defmodule ScrabbleExWeb.GameChannel do
   use Phoenix.Channel
   alias ScrabbleEx.Game
+  import ScrabbleExWeb.Endpoint, only: [signing_salt: 0]
 
   def join("game:lobby", _message, socket) do
     {:ok, socket}
   end
 
   def join("game:" <> game_id, %{"token" => token}, socket) do
-    {:ok, {player, _id}} =
-      Phoenix.Token.verify(ScrabbleExWeb.Endpoint, "salt", token, max_age: :infinity)
+    {:ok, user_id} =
+      Phoenix.Token.verify(ScrabbleExWeb.Endpoint, signing_salt(), token, max_age: :infinity)
+
+    user = ScrabbleEx.Players.get_user!(user_id)
+    player = user.username
 
     {:ok, pid} = find_or_start_game(game_id)
     res = call(pid, {:add_player, player})

@@ -16,7 +16,6 @@ defmodule ScrabbleExWeb.Router do
   scope "/", ScrabbleExWeb do
     pipe_through [:browser, ScrabbleExWeb.Plugs.Guest]
 
-    get "/", PageController, :index
 
     get "/login", LoginController, :new
     post "/login", LoginController, :create
@@ -26,10 +25,12 @@ defmodule ScrabbleExWeb.Router do
   scope "/", ScrabbleExWeb do
     pipe_through [:browser, ScrabbleExWeb.Plugs.Auth]
 
+    get "/", PageController, :index
     delete "/logout", LoginController, :delete
-
     get "/hello", PageController, :hello
     get "/play/:id", PageController, :show
+
+    post "/play", PageController, :create
   end
 
   # Other scopes may use custom stacks.
