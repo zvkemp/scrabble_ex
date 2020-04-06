@@ -293,7 +293,8 @@ defmodule ScrabbleEx.Game do
          board: new_board,
          scores: new_scores,
          racks: new_racks,
-         pass_count: 0, # reset pass count if someone has played
+         # reset pass count if someone has played
+         pass_count: 0
        })
        |> fill_racks
        |> next_player
@@ -314,12 +315,11 @@ defmodule ScrabbleEx.Game do
   def pass(game, player) do
     if pass_allowed?(game) do
       {:ok,
-        game
-        |> Map.update(:pass_count, 1, &(&1 + 1))
-        |> IO.inspect
-        |> next_player
-        |> check_game_over
-      }
+       game
+       |> Map.update(:pass_count, 1, &(&1 + 1))
+       |> IO.inspect()
+       |> next_player
+       |> check_game_over}
     else
       {:error, "passing is not allowed"}
     end
@@ -570,7 +570,7 @@ defmodule ScrabbleEx.Game do
   # FIXME: subtract remaining tiles from scores
   defp check_game_over(%Game{racks: racks} = game) do
     if any?(racks, fn {_player, rack} -> empty?(rack) end) ||
-      (game.pass_count && game.pass_count > count(game.players) * 2) do
+         (game.pass_count && game.pass_count > count(game.players) * 2) do
       game
       |> put(:game_over, true)
       |> subtract_remaining_tiles

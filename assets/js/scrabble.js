@@ -303,7 +303,9 @@ class Scrabble {
   }
 
   sendProposed() {
-    this.channel.push("proposed", this.proposed);
+    this.channel.push("proposed", this.proposed)
+      .receive("ok", ({ message }) => this.flash("info", { message }))
+      .receive("error", ({ message }) => this.flash("error", { message }))
   }
 
   sendSwapped() {

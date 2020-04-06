@@ -40,20 +40,23 @@ defmodule ScrabbleExWeb.GameChannel do
     {:noreply, socket}
   end
 
-  # FIXME: make this broadcast a game option
-  # FIXME: show player the proposed score
   def handle_in("proposed", payload, socket) do
     game = call(socket, :state)
 
     if game.current_player == socket.assigns.player do
       case ScrabbleEx.Game.propose(game, socket.assigns.player, payload) do
-        {:ok, scores} -> push(socket, "info", %{message: scores |> IO.inspect |> Enum.map(&Enum.join(&1, ",")) |> Enum.join(" ")})
-        {:error, m} = e -> push(socket, "error", %{message: m})
-      end
-      # broadcast!(socket, "new_proposed", payload)
-    end
+        {:ok, scores} ->
+          # FIXME: make this broadcast a game option
+          # broadcast!(socket, "new_proposed", payload)
 
-    {:noreply, socket}
+          response = %{message: scores |> Enum.map(&Enum.join(&1, ",")) |> Enum.join(" ")}
+
+          {:reply, {:ok, response}, socket}
+
+        {:error, m} ->
+          {:reply, {:error, %{message: m}}, socket}
+      end
+    end
   end
 
   def handle_in("start", _payload, socket) do
@@ -91,6 +94,7 @@ defmodule ScrabbleExWeb.GameChannel do
           game,
           "#{socket.assigns.player} passed."
         )
+
       {:error, msg} ->
         push(socket, "error", %{message: msg})
     end

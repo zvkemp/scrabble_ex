@@ -24,7 +24,7 @@ defmodule ScrabbleExWeb.Router do
   scope "/", ScrabbleExWeb do
     pipe_through [:browser, ScrabbleExWeb.Plugs.Auth]
 
-    get "/", PageController, :index
+    get "/", PageController, :hello
     delete "/logout", LoginController, :delete
     get "/hello", PageController, :hello
     get "/play/:id", PageController, :show

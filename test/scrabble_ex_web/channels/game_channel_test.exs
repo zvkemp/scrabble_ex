@@ -100,6 +100,9 @@ defmodule ScrabbleExWeb.GameChannelTest do
     assert_broadcast("state", %Game{current_player: nil})
     assert_broadcast("state", %Game{current_player: "zach"})
 
+    push(zach, "start")
+    assert_push("error", %{message: "game already started"})
+
     push(zach, "submit_payload", %{
       "52" => "J",
       "67" => "O",
@@ -122,13 +125,21 @@ defmodule ScrabbleExWeb.GameChannelTest do
 
     assert %{"zach" => [[["JOKES", 48]]]} = scores
 
-    push(kate, "submit_payload", %{
+    ref = push(kate, "proposed", %{})
+    assert_reply(ref, :error, %{message: "not long enough"})
+
+    payload = %{
       "53" => "O",
       "54" => "K",
       "55" => "E",
       "56" => "R",
       "57" => "S"
-    })
+    }
+
+    ref = push(kate, "proposed", payload)
+    assert_reply(ref, :ok, %{message: "JOKERS,34"})
+
+    push(kate, "submit_payload", payload)
 
     assert_broadcast("state", %Game{})
     assert_broadcast("state", %Game{})
@@ -164,6 +175,8 @@ defmodule ScrabbleExWeb.GameChannelTest do
                [["JOKES", 48]]
              ]
            } = scores
+
+    push(kate, "swap", %{"112" => "A"})
   end
 
   test "error handling", %{zach: zach} do

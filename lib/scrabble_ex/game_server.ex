@@ -69,7 +69,8 @@ defmodule ScrabbleEx.GameServer do
   end
 
   def handle_call(:start_game, _from, game) do
-    apply_game_fn(:start, [], game) # FIXME: standardize name of fn
+    # FIXME: standardize name of fn
+    apply_game_fn(:start, [], game)
   end
 
   def handle_call({:swap, player, letter_map}, _from, game) do
@@ -89,7 +90,7 @@ defmodule ScrabbleEx.GameServer do
   end
 
   defp apply_game_fn(name, args, game) do
-    case apply(Game, name, [game|args]) do
+    case apply(Game, name, [game | args]) do
       {:ok, new_game} -> {:reply, {:ok, new_game}, save_state(new_game)}
       {:error, _msg} = e -> {:reply, e, game}
     end
