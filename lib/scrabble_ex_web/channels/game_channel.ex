@@ -61,18 +61,17 @@ defmodule ScrabbleExWeb.GameChannel do
 
   def handle_in("start", _payload, socket) do
     case call(socket, :start_game) do
-      {:ok, game} -> broadcast!(socket, "state", game)
-      {:error, msg} -> push(socket, "error", %{message: msg})
+      {:ok, game} ->
+        broadcast_game_state(socket, game)
+        {:noreply, socket}
+      {:error, msg} ->
+        reply_error(socket, msg)
     end
-
-    {:noreply, socket}
   end
 
   def handle_in("swap", payload, socket) do
     case call(socket, {:swap, socket.assigns.player, payload}) do
       {:ok, %{racks: racks} = game} ->
-        # push_rack(socket, game) # FIXME: make this a reply
-
         broadcast_game_state(
           socket,
           game,
@@ -117,8 +116,6 @@ defmodule ScrabbleExWeb.GameChannel do
   end
 
   defp find_or_start_game(id) do
-    # FIXME: I think start_link causes this to close
-    # on duplicate joins (Phoenix closes the existing channel for new join)
     case ScrabbleEx.GameServer.start(id, name: {:global, "game:#{id}"}) do
       {:ok, pid} -> {:ok, pid}
       {:error, {:already_started, pid}} -> {:ok, pid}

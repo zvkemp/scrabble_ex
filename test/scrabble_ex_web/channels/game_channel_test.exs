@@ -95,13 +95,13 @@ defmodule ScrabbleExWeb.GameChannelTest do
     assert_push("state", game)
     assert %Game{current_player: nil} = game
 
-    push(kate, "start")
+    _ref = push(kate, "start")
 
     assert_broadcast("state", %Game{current_player: nil})
     assert_broadcast("state", %Game{current_player: "zach"})
 
-    push(zach, "start")
-    assert_push("error", %{message: "game already started"})
+    ref = push(zach, "start")
+    assert_reply(ref, :error, %{message: "game already started"})
 
     ref =
       push(zach, "submit_payload", %{
