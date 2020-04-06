@@ -15,7 +15,7 @@ defmodule ScrabbleExWeb.GameChannel do
     player = user.username
 
     {:ok, pid} = find_or_start_game(game_id)
-    res = call(pid, {:add_player, player})
+    res = call(pid, {:add_player, user})
 
     case res do
       {:error, "game already started"} ->
@@ -28,7 +28,8 @@ defmodule ScrabbleExWeb.GameChannel do
          socket
          # FIXME: assign game pid?
          |> assign(:game_id, game_id)
-         |> assign(:player, player)}
+         |> assign(:player, player)
+         |> assign(:user_id, user.id)}
     end
   end
 
@@ -64,6 +65,7 @@ defmodule ScrabbleExWeb.GameChannel do
       {:ok, game} ->
         broadcast_game_state(socket, game)
         {:noreply, socket}
+
       {:error, msg} ->
         reply_error(socket, msg)
     end

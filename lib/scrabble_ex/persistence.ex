@@ -7,6 +7,8 @@ defmodule ScrabbleEx.Persistence do
   alias ScrabbleEx.Repo
 
   alias ScrabbleEx.Persistence.Game
+  alias ScrabbleEx.Persistence.GameUser
+  alias ScrabbleEx.Players.User
 
   @doc """
   Returns the list of games.
@@ -90,6 +92,7 @@ defmodule ScrabbleEx.Persistence do
 
   """
   def delete_game(%Game{} = game) do
+    Repo.delete_all(from p in GameUser, where: p.game_id == ^game.id)
     Repo.delete(game)
   end
 
@@ -104,5 +107,40 @@ defmodule ScrabbleEx.Persistence do
   """
   def change_game(%Game{} = game) do
     Game.changeset(game, %{})
+  end
+
+  def add_player_to_game(game_id, user_id) do
+    Repo.insert(
+      ScrabbleEx.Persistence.GameUser.changeset(
+        %ScrabbleEx.Persistence.GameUser{},
+        %{game_id: game_id, user_id: user_id}
+      ),
+      on_conflict: :nothing
+    )
+  end
+
+  def backfill_players(game) do
+    game.players
+    |> Enum.each(&backfill_player(game, &1))
+  end
+
+  def backfill_players() do
+    list_games
+    |> Enum.each(fn
+      %Game{state: %ScrabbleEx.Game{players: players}} = game ->
+        players
+        |> Enum.each(&backfill_player(game, &1))
+
+      a ->
+        IO.inspect(a)
+    end)
+  end
+
+  def backfill_player(game, name) do
+    user = Repo.get_by(User, username: String.downcase(name))
+
+    if user do
+      add_player_to_game(game.id, user.id)
+    end
   end
 end

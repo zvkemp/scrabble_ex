@@ -61,8 +61,10 @@ defmodule ScrabbleEx.GameServer do
     {:reply, :ok, %Game{game | racks: new_racks}}
   end
 
-  def handle_call({:add_player, player}, _from, game) do
-    apply_game_fn(:add_player, [player], game)
+  def handle_call({:add_player, user}, _from, game) do
+    apply_game_fn(:add_player, [user.username], game, fn g ->
+      add_player_assoc(g, user)
+    end)
   end
 
   def handle_call(:start_game, _from, game) do
@@ -87,9 +89,17 @@ defmodule ScrabbleEx.GameServer do
   end
 
   defp apply_game_fn(name, args, game) do
+    apply_game_fn(name, args, game, & &1)
+  end
+
+  defp apply_game_fn(name, args, game, ok_callback) do
     case apply(Game, name, [game | args]) do
-      {:ok, new_game} -> {:reply, {:ok, new_game}, save_state(new_game)}
-      {:error, _msg} = e -> {:reply, e, game}
+      {:ok, new_game} ->
+        ok_callback.(new_game)
+        {:reply, {:ok, new_game}, save_state(new_game)}
+
+      {:error, _msg} = e ->
+        {:reply, e, game}
     end
   end
 
@@ -97,5 +107,9 @@ defmodule ScrabbleEx.GameServer do
     {:ok, _} = Persistence.update_game(%Persistence.Game{id: pkid, name: name}, %{state: game})
 
     game
+  end
+
+  defp add_player_assoc(%Game{pkid: pkid}, user) do
+    Persistence.add_player_to_game(pkid, user.id)
   end
 end

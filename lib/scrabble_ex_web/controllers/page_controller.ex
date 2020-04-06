@@ -20,8 +20,11 @@ defmodule ScrabbleExWeb.PageController do
 
   def hello(conn, _params) do
     user = conn.assigns.current_user
+    user = ScrabbleEx.Repo.preload(user, :games)
+    games = user.games
 
     conn
+    |> assign(:games, games)
     |> assign(:player, user.username)
     |> render("hello.html")
   end

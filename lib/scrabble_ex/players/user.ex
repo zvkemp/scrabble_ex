@@ -2,6 +2,7 @@ defmodule ScrabbleEx.Players.User do
   use Ecto.Schema
   import Ecto.Changeset
   alias ScrabbleEx.Players.{User, Encryption}
+  alias ScrabbleEx.Persistence.Game
 
   schema "users" do
     field :encrypted_password, :string
@@ -9,6 +10,8 @@ defmodule ScrabbleEx.Players.User do
 
     field :password, :string, virtual: true
     field :password_confirmation, :string, virtual: true
+
+    many_to_many :games, Game, join_through: "games_users"
 
     timestamps()
   end

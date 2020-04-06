@@ -1,0 +1,11 @@
+<tr>
+  <td>
+    <%= link @game.name, to: Routes.page_path(@conn, :show, @game.name) %>
+  </td>
+  <td>
+    <%= show_players(@game.state) %>
+  </td>
+  <td>
+    <%= if @game.state.game_over, do: "game over" %>
+  </td>
+</tr>

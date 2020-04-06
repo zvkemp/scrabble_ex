@@ -265,6 +265,19 @@ defmodule ScrabbleEx.Game do
     {:error, "game is over"}
   end
 
+  def total_scores(%Game{scores: scores}) do
+    Enum.reduce(
+      scores,
+      %{},
+      fn {player, pscores}, acc ->
+        tot =
+          pscores |> Enum.map(&(&1 |> Enum.map(fn [_, n] -> n end) |> Enum.sum())) |> Enum.sum()
+
+        put(acc, player, tot)
+      end
+    )
+  end
+
   def play(
         %__MODULE__{scores: scores, log: log, board: board} = game,
         player,

@@ -23,3 +23,18 @@
     <%= submit "go!", class: "btn right secondary-color" %>
   <% end %>
 </section>
+
+<section label="games">
+  <table>
+    <thead>
+      <th>name</th>
+      <th>players</th>
+      <th>over?</th>
+    </thead>
+    <tbody>
+      <%= for game <- assigns[:games] do %>
+        <%= render("game.html", conn: @conn, game: game) %>
+      <% end %>
+    </tbody>
+  </table>
+</section>
