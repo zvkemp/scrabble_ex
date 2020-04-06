@@ -21,6 +21,7 @@ class Scrabble {
     this.proposed = {};
     this.scores = {};
     this.players = [];
+    this.first_load = true;
 
     this._rack = new Rack(this, "#rack-container", []);
 
@@ -79,7 +80,7 @@ class Scrabble {
   set current_player(newPlayer) {
     this._current_player = newPlayer;
 
-    if (this.player === this._current_player) {
+    if (!this.first_load && this.player === this._current_player) {
       if (Notification.permission === "granted") {
         let notification = new Notification("ScrabbleEx", { body: "It is your turn" });
         notification.onclick = function() {
@@ -117,6 +118,7 @@ class Scrabble {
     this.drawSubmitButton();
     this.drawSwapButton();
     this.drawPassButton();
+    this.first_load = false;
   }
 
   handleRack(payload) {
