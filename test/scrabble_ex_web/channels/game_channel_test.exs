@@ -103,20 +103,21 @@ defmodule ScrabbleExWeb.GameChannelTest do
     push(zach, "start")
     assert_push("error", %{message: "game already started"})
 
-    push(zach, "submit_payload", %{
-      "52" => "J",
-      "67" => "O",
-      "82" => "K",
-      "97" => "E",
-      "112" => "S"
-    })
+    ref =
+      push(zach, "submit_payload", %{
+        "52" => "J",
+        "67" => "O",
+        "82" => "K",
+        "97" => "E",
+        "112" => "S"
+      })
 
     assert_broadcast("state", %Game{})
     assert_broadcast("state", %Game{})
 
     # asserting the rack message ensures state is resolved before getting
     # game_state() here
-    assert_push("rack", %{rack: ["T", "N", "A", "L", "E", "X", "V"]})
+    assert_reply(ref, :ok, %{rack: ["T", "N", "A", "L", "E", "X", "V"]})
 
     game = game_state()
     assert %Game{scores: scores} = game
@@ -139,11 +140,11 @@ defmodule ScrabbleExWeb.GameChannelTest do
     ref = push(kate, "proposed", payload)
     assert_reply(ref, :ok, %{message: "JOKERS,34"})
 
-    push(kate, "submit_payload", payload)
+    ref = push(kate, "submit_payload", payload)
 
     assert_broadcast("state", %Game{})
     assert_broadcast("state", %Game{})
-    assert_push("rack", %{rack: ["B", "B", "Q", "Z"]})
+    assert_reply(ref, :ok, %{rack: ["B", "B", "Q", "Z"]})
     game = game_state()
     assert %Game{scores: scores} = game
     # ensure this works
@@ -154,16 +155,17 @@ defmodule ScrabbleExWeb.GameChannelTest do
              "kate" => [[["JOKERS", 34]]]
            } = scores
 
-    push(zach, "submit_payload", %{
-      "38" => "T",
-      "68" => "N",
-      "83" => "A",
-      "98" => "L"
-    })
+    ref =
+      push(zach, "submit_payload", %{
+        "38" => "T",
+        "68" => "N",
+        "83" => "A",
+        "98" => "L"
+      })
 
     assert_broadcast("state", %Game{})
     assert_broadcast("state", %Game{})
-    assert_push("rack", %{rack: ["E", "X", "V"]})
+    assert_reply(ref, :ok, %{rack: ["E", "X", "V"]})
     game = game_state()
     assert %Game{scores: scores} = game
     # ensure this works
@@ -176,7 +178,10 @@ defmodule ScrabbleExWeb.GameChannelTest do
              ]
            } = scores
 
-    push(kate, "swap", %{"112" => "A"})
+    game = game_state().racks["kate"]
+
+    ref = push(kate, "swap", %{"112" => "A"})
+    assert_reply(ref, :error, %{message: "player does not have [\"A\"]"})
   end
 
   test "error handling", %{zach: zach} do
@@ -184,10 +189,19 @@ defmodule ScrabbleExWeb.GameChannelTest do
     game = game_state()
 
     assert game.current_player == "zach"
-    push(zach, "submit_payload", %{"112" => "Z", "113" => "O", "114" => "T"})
+    ref = push(zach, "submit_payload", %{"112" => "Z", "113" => "O", "114" => "T"})
 
     # assert_broadcast("state", %Game{})
-    assert_push("error", %{message: "player does not have the goods" <> _})
+    assert_reply(ref, :error, %{message: "player does not have the goods" <> _})
     assert game_state().current_player == "zach"
+  end
+
+  test "swap", %{zach: zach} do
+    start_game()
+    game_at_start = game_state()
+
+    ref = push(zach, "swap", %{"112" => "J"})
+    assert_reply(ref, :ok, %{rack: new_rack})
+    assert game_at_start.racks["zach"] != game_state().racks["zach"]
   end
 end

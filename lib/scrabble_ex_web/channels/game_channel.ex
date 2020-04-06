@@ -36,7 +36,7 @@ defmodule ScrabbleExWeb.GameChannel do
     game = call(socket, :state)
     broadcast!(socket, "info", %{message: "#{socket.assigns.player} joined"})
     broadcast!(socket, "state", game)
-    push_rack(socket, game)
+    push(socket, "rack", rack_payload(socket, game))
     {:noreply, socket}
   end
 
@@ -70,8 +70,8 @@ defmodule ScrabbleExWeb.GameChannel do
 
   def handle_in("swap", payload, socket) do
     case call(socket, {:swap, socket.assigns.player, payload}) do
-      {:ok, game} ->
-        push_rack(socket, game)
+      {:ok, %{racks: racks} = game} ->
+        # push_rack(socket, game) # FIXME: make this a reply
 
         broadcast_game_state(
           socket,
@@ -79,11 +79,11 @@ defmodule ScrabbleExWeb.GameChannel do
           "#{socket.assigns.player} swapped #{payload |> Enum.count()} tiles."
         )
 
-      {:error, msg} ->
-        push(socket, "error", %{message: msg})
-    end
+        {:reply, {:ok, %{rack: racks[socket.assigns.player]}}, socket}
 
-    {:noreply, socket}
+      {:error, msg} ->
+        {:reply, {:error, %{message: msg}}, socket}
+    end
   end
 
   def handle_in("pass", payload, socket) do
@@ -95,11 +95,11 @@ defmodule ScrabbleExWeb.GameChannel do
           "#{socket.assigns.player} passed."
         )
 
-      {:error, msg} ->
-        push(socket, "error", %{message: msg})
-    end
+        {:noreply, socket}
 
-    {:noreply, socket}
+      {:error, msg} ->
+        {:reply, {:error, %{message: msg}}, socket}
+    end
   end
 
   # FIXME: rename "submit_payload" => "play"
@@ -109,13 +109,11 @@ defmodule ScrabbleExWeb.GameChannel do
     case call(socket, {:play, socket.assigns.player, payload}) do
       {:ok, game} ->
         broadcast_game_state(socket, game)
-        push_rack(socket, game)
+        reply_with_rack(socket, game)
 
       {:error, msg} ->
-        push(socket, "error", %{message: msg})
+        reply_error(socket, msg)
     end
-
-    {:noreply, socket}
   end
 
   defp find_or_start_game(id) do
@@ -135,12 +133,12 @@ defmodule ScrabbleExWeb.GameChannel do
   defp call(pid, term) when is_pid(pid), do: GenServer.call(pid, term)
   defp call(%Phoenix.Socket{} = socket, term), do: call(find_game_pid(socket), term)
 
-  defp push_rack(socket, %Game{racks: racks}) do
-    push(socket, "rack", %{rack: racks[socket.assigns.player]})
+  defp reply_with_rack(socket, %Game{} = game) do
+    {:reply, {:ok, rack_payload(socket, game)}, socket}
   end
 
-  defp push_rack(socket) do
-    push_rack(socket, call(socket, :state))
+  defp rack_payload(socket, %{racks: racks} = game) do
+    %{rack: racks[socket.assigns.player]}
   end
 
   defp broadcast_game_state(socket, game, additional_msg \\ nil) do
@@ -153,5 +151,9 @@ defmodule ScrabbleExWeb.GameChannel do
 
     broadcast!(socket, "state", game)
     broadcast!(socket, "info", %{message: msg})
+  end
+
+  defp reply_error(socket, msg) do
+    {:reply, {:error, %{message: msg}}, socket}
   end
 end

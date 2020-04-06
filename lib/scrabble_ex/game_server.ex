@@ -34,8 +34,6 @@ defmodule ScrabbleEx.GameServer do
 
     case game do
       nil ->
-        IO.puts("game #{id} not found, creating new")
-
         {:ok, game} =
           Persistence.create_game(%{
             name: id,
@@ -45,7 +43,6 @@ defmodule ScrabbleEx.GameServer do
         {:ok, %Game{game.state | pkid: game.id}}
 
       %Persistence.Game{state: state} ->
-        IO.puts("game #{id} rehydrated")
         {:ok, state}
     end
   end

@@ -63,7 +63,6 @@ class Scrabble {
 
   flash(level, { message }) {
     message = message || "&nbsp;"
-    console.info(message);
     this.flash_container.html(message);
     this.flash_container.classed("alert-danger", level === "error");
   }
@@ -298,26 +297,31 @@ class Scrabble {
     return true;
   }
 
+  push(key, payload) {
+    return this.channel.push(key, payload)
+      .receive("error", ({ message }) => this.flash("error", { message }));
+  }
+
   submitProposed() {
-    this.channel.push("submit_payload", this.proposed);
+    this.push("submit_payload", this.proposed)
+      .receive("ok", ({ rack }) => this.handleRack({ rack }));
   }
 
   sendProposed() {
-    this.channel.push("proposed", this.proposed)
+    this.push("proposed", this.proposed)
       .receive("ok", ({ message }) => this.flash("info", { message }))
-      .receive("error", ({ message }) => this.flash("error", { message }))
   }
 
   sendSwapped() {
-    this.channel.push("swap", this.proposed);
+    this.push("swap", this.proposed)
+      .receive("ok", ({ rack }) => this.handleRack({ rack }))
   }
 
   sendPassed() {
-    this.channel.push("pass", {});
+    this.push("pass", {});
   }
 
   clickSetCursor(i) {
-    let tile = select(`#tile-${this.cursor}`);
     if (this.cursor === i) {
       if (this.direction === "h") {
         this.direction = "v"
