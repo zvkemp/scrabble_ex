@@ -17,7 +17,7 @@ class Scrabble {
     this.rack_container = select("section.rack-container");
     this.flash_container = select("section.flash-container p");
     this.direction = 'h'; // or 'v';
-    this.current_player = undefined;
+    this._current_player = undefined;
     this.proposed = {};
     this.scores = {};
     this.players = [];
@@ -25,6 +25,8 @@ class Scrabble {
     this._rack = new Rack(this, "#rack-container", []);
 
     this.joinGameAs(this.token, this.name);
+
+    Notification.requestPermission();
   }
 
   joinGameAs(token, name) {
@@ -68,6 +70,23 @@ class Scrabble {
   handleProposed(payload) {
     this.proposed = payload;
     this.drawSquares();
+  }
+
+  get current_player() {
+    return this._current_player;
+  }
+
+  set current_player(newPlayer) {
+    this._current_player = newPlayer;
+
+    if (this.player === this._current_player) {
+      if (Notification.permission === "granted") {
+        let notification = new Notification("ScrabbleEx", { body: "It is your turn" });
+        notification.onclick = function() {
+          window.focus();
+        }
+      }
+    }
   }
 
   handleGameState(payload) {
