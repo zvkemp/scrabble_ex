@@ -330,11 +330,10 @@ defmodule ScrabbleEx.Game do
       {:ok,
        game
        |> Map.update(:pass_count, 1, &(&1 + 1))
-       |> IO.inspect()
        |> next_player
        |> check_game_over}
     else
-      {:error, "passing is not allowed"}
+      {:error, "you shall not pass"}
     end
   end
 

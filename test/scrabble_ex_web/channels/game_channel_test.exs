@@ -86,22 +86,25 @@ defmodule ScrabbleExWeb.GameChannelTest do
     assert_broadcast("state", %Game{current_player: "zach"})
   end
 
-  test "first turn", %{zach: zach, kate: kate} do
+  test "full game", %{zach: zach, kate: kate} do
     game = game_state()
     # pushed to both clients on join
     # only one is pinned bc the state of the 'bag' at
     # either push is different. Which means: FIXME: don't serialize the bag
     assert_push("state", ^game)
-    assert_push("state", game)
+    assert_push("state", ^game)
     assert %Game{current_player: nil} = game
 
     _ref = push(kate, "start")
 
-    assert_broadcast("state", %Game{current_player: nil})
+    assert_broadcast("state", %Game{current_player: "zach"})
     assert_broadcast("state", %Game{current_player: "zach"})
 
     ref = push(zach, "start")
     assert_reply(ref, :error, %{message: "game already started"})
+
+    ref = push(zach, "pass")
+    assert_reply(ref, :error, %{message: "you shall not pass"})
 
     ref =
       push(zach, "submit_payload", %{
@@ -112,14 +115,15 @@ defmodule ScrabbleExWeb.GameChannelTest do
         "112" => "S"
       })
 
-    assert_broadcast("state", %Game{})
-    assert_broadcast("state", %Game{})
-
     # asserting the rack message ensures state is resolved before getting
     # game_state() here
     assert_reply(ref, :ok, %{rack: ["T", "N", "A", "L", "E", "X", "V"]})
 
     game = game_state()
+    assert_broadcast("state", ^game)
+    assert_broadcast("state", ^game)
+
+    assert game.current_player == "kate"
     assert %Game{scores: scores} = game
     # ensure this works
     Jason.encode!(game)
@@ -128,6 +132,9 @@ defmodule ScrabbleExWeb.GameChannelTest do
 
     ref = push(kate, "proposed", %{})
     assert_reply(ref, :error, %{message: "not long enough"})
+
+    ref = push(kate, "proposed", %{"0" => "K", "1" => "E"})
+    assert_reply(ref, :error, %{message: "word is not connected"})
 
     payload = %{
       "53" => "O",
@@ -141,13 +148,11 @@ defmodule ScrabbleExWeb.GameChannelTest do
     assert_reply(ref, :ok, %{message: "JOKERS,34"})
 
     ref = push(kate, "submit_payload", payload)
-
-    assert_broadcast("state", %Game{})
-    assert_broadcast("state", %Game{})
     assert_reply(ref, :ok, %{rack: ["B", "B", "Q", "Z"]})
-    game = game_state()
-    assert %Game{scores: scores} = game
-    # ensure this works
+
+    %Game{scores: scores} = game = game_state()
+    assert_broadcast("state", ^game)
+    assert_broadcast("state", ^game)
     Jason.encode!(game)
 
     assert %{
@@ -163,11 +168,11 @@ defmodule ScrabbleExWeb.GameChannelTest do
         "98" => "L"
       })
 
-    assert_broadcast("state", %Game{})
-    assert_broadcast("state", %Game{})
     assert_reply(ref, :ok, %{rack: ["E", "X", "V"]})
-    game = game_state()
-    assert %Game{scores: scores} = game
+
+    %Game{scores: scores} = game = game_state()
+    assert_broadcast("state", ^game)
+    assert_broadcast("state", ^game)
     # ensure this works
     Jason.encode!(game)
 
@@ -182,6 +187,10 @@ defmodule ScrabbleExWeb.GameChannelTest do
 
     ref = push(kate, "swap", %{"112" => "A"})
     assert_reply(ref, :error, %{message: "player does not have [\"A\"]"})
+
+    _ref = push(kate, "pass")
+    assert_broadcast("state", %Game{current_player: "zach"})
+    assert_broadcast("state", %Game{current_player: "zach"})
   end
 
   test "error handling", %{zach: zach} do

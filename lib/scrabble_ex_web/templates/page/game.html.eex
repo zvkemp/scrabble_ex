@@ -6,6 +6,6 @@
     <%= show_players(@game.state) %>
   </td>
   <td>
-    <%= if @game.state.game_over, do: "game over" %>
+    <%= if @game.state.game_over, do: "game over", else: "#{@game.state.current_player}'s turn" %>
   </td>
 </tr>

@@ -29,7 +29,7 @@
     <thead>
       <th>name</th>
       <th>players</th>
-      <th>over?</th>
+      <th></th>
     </thead>
     <tbody>
       <%= for game <- assigns[:games] do %>
