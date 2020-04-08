@@ -72,7 +72,7 @@ defmodule ScrabbleEx.Score do
       not_words =
         real_words
         |> Enum.filter(fn {_, x} -> !x end)
-        |> Enum.map(fn {w, _} -> w end)
+        |> Enum.map(fn {w, _} -> String.upcase(w) end)
         |> Enum.join(", ")
 
       {:error, "these are not words: #{not_words}"}
