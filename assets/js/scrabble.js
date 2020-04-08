@@ -79,7 +79,10 @@ class Scrabble {
   set current_player(newPlayer) {
     this._current_player = newPlayer;
 
-    if (!this.first_load && this.player === this._current_player) {
+    if (this.first_load) { return }
+    if (document.hasFocus()) { return }
+
+    if (this.player === this._current_player) {
       if (Notification.permission === "granted") {
         let notification = new Notification("ScrabbleEx", { body: "It is your turn" });
         notification.onclick = function() {
