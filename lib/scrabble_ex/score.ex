@@ -54,9 +54,13 @@ defmodule ScrabbleEx.Score do
 
   defp validate_words({:ok, words_with_scores}) do
     real_words =
-      Enum.reduce(words_with_scores, %{}, fn [word, _], acc ->
-        Map.put(acc, word, ScrabbleEx.Dictionary.word?(word))
-      end)
+      Enum.map(words_with_scores, fn [word, _] -> word end)
+      |> ScrabbleEx.Word.show_legal_words()
+
+    # real_words =
+    #   Enum.reduce(words_with_scores, %{}, fn [word, _], acc ->
+    #     Map.put(acc, word, ScrabbleEx.Dictionary.word?(word))
+    #   end)
 
     if Enum.all?(real_words, fn
          # BINGO

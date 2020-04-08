@@ -31,18 +31,25 @@ defmodule ScrabbleEx.Word do
   end
 
   def ospd_words?(words) do
-    Repo.aggregate(
-      (from w in Word, where: w.word in ^words),
-      :count
-    ) == Enum.count(words)
+    Repo.aggregate(select_words(words), :count) == Enum.count(words)
   end
 
-  def show_illegal_words(words) do
-    words -- show_legal_words(words)
-  end
+  # def show_illegal_words(words) do
+  #   words -- show_legal_words(words)
+  # end
 
+  # returns map of %{ word => bool }
   def show_legal_words(words) do
+    words = words |> Enum.map(&String.downcase/1)
+    word_map =
+      words
+      |> Enum.map(&{&1, false})
+      |> Enum.into(%{})
+
     Repo.all(select_words(words))
+    |> Enum.reduce(word_map, fn (word, map) ->
+      Map.put(map, word, true)
+    end)
   end
 
   defp select_words(words) do

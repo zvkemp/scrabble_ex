@@ -19,4 +19,11 @@ defmodule ScrabbleEx.Dictionary do
   def handle_call({:member, word}, _from, state) do
     {:reply, MapSet.member?(state, String.downcase(word)), state}
   end
+
+  def show_legal_words(words) do
+    words
+    |> Enum.reduce(%{}, fn (word, map) ->
+      Map.put(map, word, word?(word))
+    end)
+  end
 end
