@@ -60,8 +60,6 @@ defmodule ScrabbleEx.GameTest do
       Game.new("id", players: ["zach", "kate"], board: Board.new(), bag: bag)
       |> Game.start()
 
-    ScrabbleEx.Word.add_ospd_word("jokes")
-
     Game.propose(game, "zach", %{
       "52" => ":J",
       "67" => "O",
@@ -85,7 +83,6 @@ defmodule ScrabbleEx.GameTest do
   end
 
   test "first play ok" do
-    ~w[jokes jokers el ka on tonal] |> Enum.each(&ScrabbleEx.Word.add_ospd_word/1)
     bag = ~w[
       J O K E S X V O K E R S Q Z T N A L E B B
     ]

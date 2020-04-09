@@ -37,9 +37,6 @@ defmodule ScrabbleExWeb.GameChannelTest do
       socket(ScrabbleExWeb.UserSocket)
       |> subscribe_and_join(GameChannel, "game:default", %{"token" => k_token})
 
-    ~w[jokes jokers el ka on tonal]
-    |> Enum.each(&ScrabbleEx.Word.add_ospd_word/1)
-
     {:ok, %{zach: zach, kate: kate}}
   end
 
