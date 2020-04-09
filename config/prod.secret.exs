@@ -30,6 +30,11 @@ config :scrabble_ex, ScrabbleExWeb.Endpoint,
   ],
   secret_key_base: secret_key_base
 
+config :scrabble_ex, ScrabbleEx.Dictionary, [
+  :load_words_from_url,
+  [System.get_env("WORD_LIST_URL")]
+]
+
 # ## Using releases (Elixir v1.9+)
 #
 # If you are doing OTP releases, you need to instruct Phoenix
