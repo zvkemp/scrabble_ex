@@ -47,7 +47,7 @@ defmodule ScrabbleEx.MixProject do
       {:comeonin, "~> 5.0"},
       {:bcrypt_elixir, "~> 2.0"},
       {:inflex, "~> 2.0.0"},
-      {:tesla, "~> 1.0"},
+      {:tesla, "~> 1.0"}
     ]
   end
 

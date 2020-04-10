@@ -39,7 +39,8 @@ defmodule ScrabbleEx.Game do
     :pkid,
     :name,
     :game_over,
-    :pass_count
+    :pass_count,
+    :referee
   ]
 
   defimpl Jason.Encoder, for: [__MODULE__] do
@@ -84,7 +85,8 @@ defmodule ScrabbleEx.Game do
       racks: players |> map(&{&1, []}) |> into(%{}),
       name: name,
       game_over: false,
-      pass_count: 0
+      pass_count: 0,
+      referee: struct(ScrabbleEx.Referee)
     }
     |> fill_racks
   end
@@ -175,6 +177,28 @@ defmodule ScrabbleEx.Game do
     {:error, "game already started"}
   end
 
+  def remaining_letters(game) do
+    remaining_letters(game, [])
+  end
+
+  def remaining_letters(%{racks: racks} = game, player) when is_binary(player) do
+    remaining_letters(game, racks[player])
+  end
+
+  def remaining_letters(%{racks: racks, bag: bag}, omit) when is_list(omit) do
+    ((Map.values(racks) |> List.flatten()) ++ (bag -- omit))
+    |> Enum.sort_by(fn
+      "BLANK" -> "ZZZ"
+      char -> char
+    end)
+    |> Enum.reduce([], fn
+      char, [] -> [[char, 1]]
+      char, [[other_char, count] | tail] when char == other_char -> [[char, count + 1] | tail]
+      char, [_ | _] = tail -> [[char, 1] | tail]
+    end)
+    |> Enum.reverse()
+  end
+
   def add_player(%Game{} = game, player) do
     case has_key?(game.racks, player) do
       false ->
@@ -208,6 +232,7 @@ defmodule ScrabbleEx.Game do
     count = game.players |> count()
     idx = index_of_player(game.players, game.current_player)
     next_player(game, rem(idx + 1, count))
+    |> prepare_turn
   end
 
   defp index_of_player(players, player) do
@@ -313,8 +338,28 @@ defmodule ScrabbleEx.Game do
        |> next_player
        |> check_game_over}
     else
-      {:error, _msg} = e -> e
+      {:error, msg} = e ->
+        case handle_miss(game) do
+          {:ok, :next_player, additional_message, game} -> {:error, :next_player, msg <> "; " <> additional_message, game}
+          {:ok, %Game{} = game} -> {:error, msg, game}
+        end
     end
+  end
+
+  defp handle_miss(game) do
+    referee(game).handle_miss(game)
+  end
+
+  defp prepare_turn(game) do
+    referee(game).prepare_turn(game)
+  end
+
+  defp referee(game) do
+    (game.referee || default_referee).__struct__
+  end
+
+  defp default_referee do
+    struct(ScrabbleEx.Referee)
   end
 
   def pass(%Game{game_over: true} = game, player) do

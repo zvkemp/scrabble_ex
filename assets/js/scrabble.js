@@ -123,9 +123,13 @@ class Scrabble {
     this.first_load = false;
   }
 
-  handleRack(payload) {
-    if (payload.rack) {
-      this.rack = payload.rack;
+  handleRack({ rack, remaining }) {
+    if (rack) {
+      this.rack = rack;
+    }
+
+    if (remaining) {
+      console.info("remaining letters:\n\n", remaining.map(f => f.join(": ")).join("\n"))
     }
   }
 
@@ -307,7 +311,7 @@ class Scrabble {
 
   submitProposed() {
     this.push("submit_payload", this.proposed)
-      .receive("ok", ({ rack }) => this.handleRack({ rack }));
+      .receive("ok", (payload) => this.handleRack(payload));
   }
 
   sendProposed() {
@@ -317,7 +321,7 @@ class Scrabble {
 
   sendSwapped() {
     this.push("swap", this.proposed)
-      .receive("ok", ({ rack }) => this.handleRack({ rack }))
+      .receive("ok", (payload) => this.handleRack(payload))
   }
 
   sendPassed() {

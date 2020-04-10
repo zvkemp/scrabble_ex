@@ -35,7 +35,7 @@ defmodule ScrabbleExWeb.GameChannel do
 
   def handle_info(:after_join, socket) do
     game = call(socket, :state)
-    broadcast!(socket, "info", %{message: "#{socket.assigns.player} joined"})
+    # broadcast!(socket, "info", %{message: "#{socket.assigns.player} joined"})
     broadcast!(socket, "state", game)
     push(socket, "rack", rack_payload(socket, game))
     {:noreply, socket}
@@ -114,6 +114,11 @@ defmodule ScrabbleExWeb.GameChannel do
 
       {:error, msg} ->
         reply_error(socket, msg)
+      {:error, :next_player, msg, game} ->
+        broadcast_game_state(socket, game)
+        broadcast_admonishment(socket, game)
+        push(socket, "rack", rack_payload(socket, game))
+        reply_error(socket, msg)
     end
   end
 
@@ -137,7 +142,10 @@ defmodule ScrabbleExWeb.GameChannel do
   end
 
   defp rack_payload(socket, %{racks: racks} = game) do
-    %{rack: racks[socket.assigns.player]}
+    %{
+      rack: racks[socket.assigns.player],
+      remaining: Game.remaining_letters(game, socket.assigns.player)
+    }
   end
 
   defp broadcast_game_state(socket, game, additional_msg \\ nil) do
@@ -150,6 +158,10 @@ defmodule ScrabbleExWeb.GameChannel do
 
     broadcast!(socket, "state", game)
     broadcast!(socket, "info", %{message: msg})
+  end
+
+  defp broadcast_admonishment(socket, game) do
+    broadcast!(socket, "info", %{message: "#{socket.assigns.player} lost a turn due to illegal maneuvers."})
   end
 
   defp reply_error(socket, msg) do

@@ -21,7 +21,7 @@ defmodule ScrabbleEx.Dictionary do
 
   def show_legal_words(words) do
     words
-    |> Enum.reduce(%{}, fn (word, map) ->
+    |> Enum.reduce(%{}, fn word, map ->
       Map.put(map, word, word?(word))
     end)
   end

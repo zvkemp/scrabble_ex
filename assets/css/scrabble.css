@@ -97,8 +97,8 @@
 }
 
 .board-square.tile-proposed {
-  background-color: tan;
-  color: green;
+  background-color: green;
+  color: white;
   border: none;
 }
 

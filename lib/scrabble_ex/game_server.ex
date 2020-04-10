@@ -100,6 +100,12 @@ defmodule ScrabbleEx.GameServer do
 
       {:error, _msg} = e ->
         {:reply, e, game}
+
+      # error plus new state
+      {:error, msg, new_game} ->
+        {:reply, {:error, msg}, save_state(new_game)}
+      {:error, :next_player, msg, new_game} ->
+        {:reply, {:error, :next_player, msg, new_game}, save_state(new_game)}
     end
   end
 

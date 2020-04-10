@@ -17,7 +17,7 @@ defmodule ScrabbleEx.GameTest do
         {0, 2} => "a"
       })
 
-    assert {:error, "does not cross center"} = result
+    assert {:error, "does not cross center", new_game} = result
   end
 
   test "first play only one letter", %{game: game} do
@@ -26,7 +26,7 @@ defmodule ScrabbleEx.GameTest do
         112 => "a"
       })
 
-    assert {:error, "not long enough"} = result
+    assert {:error, "not long enough", new_game} = result
   end
 
   test "diagonal", %{game: game} do
@@ -37,7 +37,7 @@ defmodule ScrabbleEx.GameTest do
         144 => "c"
       })
 
-    assert {:error, "word is not linear"} = result
+    assert {:error, "word is not linear", new_game} = result
   end
 
   test "discontinuous", %{game: game} do
@@ -48,7 +48,7 @@ defmodule ScrabbleEx.GameTest do
         157 => "c"
       })
 
-    assert {:error, "word is not continuous"} = result
+    assert {:error, "word is not continuous", new_game} = result
   end
 
   test "first play with blanks" do
@@ -137,5 +137,66 @@ defmodule ScrabbleEx.GameTest do
                [["JOKES", 48]]
              ]
            } = scores
+  end
+
+  test "lose a turn" do
+    bag = ~w[
+      J O K E S X V O K E R S Q Z T N A L E B B
+    ]
+
+    {:ok, game} =
+      Game.new("foo", players: ["zach", "kate"], board: Board.new(), bag: bag)
+      |> Game.start()
+
+    result =
+      Game.play(game, "zach", %{
+        52 => "J",
+        67 => "O",
+        82 => "K",
+        97 => "E",
+        112 => "X"
+      })
+
+    assert {:error,
+      "these are not words: JOKEX",
+      %Game{scores: scores, board: %{state: state} = board} = game
+    } = result
+
+    assert game.current_player == "zach"
+    assert game.referee.tries_remaining == 2
+
+    result =
+      Game.play(game, "zach", %{
+        52 => "J",
+        67 => "O",
+        82 => "X",
+        97 => "E",
+        112 => "S"
+      })
+
+    assert {:error,
+      "these are not words: JOXES",
+      %Game{scores: scores, board: %{state: state} = board} = game
+    } = result
+
+    assert game.current_player == "zach"
+    assert game.referee.tries_remaining == 1
+
+    result =
+      Game.play(game, "zach", %{
+        52 => "S",
+        67 => "O",
+        82 => "X",
+        97 => "E",
+        112 => "J"
+      })
+
+    assert {:error,
+      "these are not words: SOXEJ; You have exhausted three tries. Lose a turn!",
+      %Game{scores: scores, board: %{state: state} = board} = game
+    } = result
+
+    assert game.current_player == "kate"
+    assert game.referee.tries_remaining == 3
   end
 end
