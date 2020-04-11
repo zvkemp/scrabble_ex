@@ -269,7 +269,12 @@ class Scrabble {
           return this.setProposed(null);
         }
       }
-      tile.html('').classed("tile-proposed", false)
+
+      let component = this;
+
+      tile.html(function ({ bonus }) {
+        return boni[bonus];
+      }).classed("tile-proposed", false)
         .classed("tile-blank", false);
       this.deleteProposed(this.cursor);
       this.reverseCursor();
@@ -388,10 +393,6 @@ class Scrabble {
     } else {
       return this.moveCursor(0, -1);
     }
-  }
-
-  static get boni() {
-    return boni;
   }
 
   drawSquares() {

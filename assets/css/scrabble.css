@@ -103,6 +103,9 @@
   background-color: tan;
   border: none;
   border-radius: 4px;
+  font-size: 16px;
+  font-weight: normal;
+  color: black;
 }
 
 .rack-square.tile.empty {
@@ -114,6 +117,8 @@
   background-color: green;
   color: white;
   border: none;
+  font-size: 16px;
+  font-weight: normal;
 }
 
 .board-square.tile-blank {
