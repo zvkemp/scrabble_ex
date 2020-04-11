@@ -67,22 +67,24 @@ defmodule ScrabbleExWeb.GameChannelTest do
     # pushed to both clients on join
     assert_push("state", ^game)
     assert_push("state", k_game)
+    assert_broadcast("state", %Game{current_player: nil})
+    assert_broadcast("state", %Game{current_player: nil})
 
-    {:ok, rt} = Jason.decode(Jason.encode!(k_game))
+    assert {:ok, rt} = Jason.decode(Jason.encode!(k_game))
 
     assert %{"board" => board, "scores" => scores} = rt
     assert Map.has_key?(rt, "bag") == false
     assert Map.has_key?(rt, "racks") == false
 
     game = game_state()
-    z_rack = %{rack: game.racks["zach"]}
-    k_rack = %{rack: game.racks["kate"]}
-    assert_push("rack", ^z_rack)
-    assert_push("rack", ^k_rack)
+    z_rack = game.racks["zach"]
+    k_rack = game.racks["kate"]
+    assert_push("rack", %{rack: ^z_rack})
+    assert_push("rack", %{rack: ^k_rack})
+
     assert %Game{current_player: nil} = game_state()
 
     push(zach, "start")
-    assert_broadcast("state", %Game{current_player: nil})
     assert_broadcast("state", %Game{current_player: "zach"})
   end
 
