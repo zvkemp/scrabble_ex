@@ -17,7 +17,7 @@ defmodule ScrabbleEx.GameTest do
         {0, 2} => "a"
       })
 
-    assert {:error, "does not cross center", new_game} = result
+    assert {:error, "does not cross center"} = result
   end
 
   test "first play only one letter", %{game: game} do
@@ -26,7 +26,7 @@ defmodule ScrabbleEx.GameTest do
         112 => "a"
       })
 
-    assert {:error, "not long enough", new_game} = result
+    assert {:error, "not long enough"} = result
   end
 
   test "diagonal", %{game: game} do
@@ -37,7 +37,7 @@ defmodule ScrabbleEx.GameTest do
         144 => "c"
       })
 
-    assert {:error, "word is not linear", new_game} = result
+    assert {:error, "word is not linear"} = result
   end
 
   test "discontinuous", %{game: game} do
@@ -48,7 +48,7 @@ defmodule ScrabbleEx.GameTest do
         157 => "c"
       })
 
-    assert {:error, "word is not continuous", new_game} = result
+    assert {:error, "word is not continuous"} = result
   end
 
   test "first play with blanks" do
@@ -192,6 +192,7 @@ defmodule ScrabbleEx.GameTest do
       })
 
     assert {:error,
+      :next_player,
       "these are not words: SOXEJ; You have exhausted three tries. Lose a turn!",
       %Game{scores: scores, board: %{state: state} = board} = game
     } = result

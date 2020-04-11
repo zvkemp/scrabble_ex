@@ -1,12 +1,16 @@
 defmodule ScrabbleEx.Score do
   alias ScrabbleEx.Board
 
+  import Enum, only: [count: 1, at: 2]
+
   def score(board, new_board, letter_map, first_turn \\ false) do
     words_to_score = Board.word_maps(new_board) -- Board.word_maps(board)
 
     # if there's only 1 word, it must be longer than the letters played (validate connected)
-    if !first_turn && Enum.count(words_to_score) == 1 &&
-         Enum.at(words_to_score, 0) |> Enum.count() <= Enum.count(letter_map) do
+    word_count = Enum.count(words_to_score)
+
+    if word_count == 0 || (!first_turn && word_count == 1 &&
+         count(at(words_to_score, 0)) <= count(letter_map)) do
       {:error, "word is not connected"}
     else
       scores =
@@ -75,7 +79,7 @@ defmodule ScrabbleEx.Score do
         |> Enum.map(fn {w, _} -> String.upcase(w) end)
         |> Enum.join(", ")
 
-      {:error, "these are not words: #{not_words}"}
+      {:miss, "these are not words: #{not_words}"}
     end
   end
 

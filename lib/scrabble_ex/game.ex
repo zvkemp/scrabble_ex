@@ -338,7 +338,9 @@ defmodule ScrabbleEx.Game do
        |> next_player
        |> check_game_over}
     else
-      {:error, msg} = e ->
+      {:error, _msg} = e -> e
+
+      {:miss, msg} ->
         case handle_miss(game) do
           {:ok, :next_player, additional_message, game} -> {:error, :next_player, msg <> "; " <> additional_message, game}
           {:ok, %Game{} = game} -> {:error, msg, game}
