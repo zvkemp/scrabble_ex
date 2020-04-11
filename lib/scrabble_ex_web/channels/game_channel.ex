@@ -114,6 +114,7 @@ defmodule ScrabbleExWeb.GameChannel do
 
       {:error, msg} ->
         reply_error(socket, msg)
+
       {:error, :next_player, msg, game} ->
         broadcast_game_state(socket, game)
         broadcast_admonishment(socket, game)
@@ -161,7 +162,9 @@ defmodule ScrabbleExWeb.GameChannel do
   end
 
   defp broadcast_admonishment(socket, game) do
-    broadcast!(socket, "info", %{message: "#{socket.assigns.player} lost a turn due to illegal maneuvers."})
+    broadcast!(socket, "info", %{
+      message: "#{socket.assigns.player} lost a turn due to illegal maneuvers."
+    })
   end
 
   defp reply_error(socket, msg) do

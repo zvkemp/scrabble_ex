@@ -1,4 +1,4 @@
-<tr>
+<tr class="game-row <%= if @game.state.game_over, do: "game-over", else: @game.state.current_player == @conn.assigns.player && "your-turn" %>">
   <td>
     <%= link @game.name, to: Routes.page_path(@conn, :show, @game.name) %>
   </td>

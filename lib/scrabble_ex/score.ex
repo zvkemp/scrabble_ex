@@ -9,8 +9,9 @@ defmodule ScrabbleEx.Score do
     # if there's only 1 word, it must be longer than the letters played (validate connected)
     word_count = Enum.count(words_to_score)
 
-    if word_count == 0 || (!first_turn && word_count == 1 &&
-         count(at(words_to_score, 0)) <= count(letter_map)) do
+    if word_count == 0 ||
+         (!first_turn && word_count == 1 &&
+            count(at(words_to_score, 0)) <= count(letter_map)) do
       {:error, "word is not connected"}
     else
       scores =

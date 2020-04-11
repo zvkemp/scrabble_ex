@@ -9,12 +9,14 @@ defmodule ScrabbleEx.Referee do
 
   def handle_miss(game) do
     tries_remaining = (game.referee || struct(__MODULE__)).tries_remaining - 1
+
     if tries_remaining > 0 do
       {:ok, %{game | referee: %__MODULE__{tries_remaining: tries_remaining}}}
     else
       {
         :ok,
-        :next_player, # FIXME: should this return error?
+        # FIXME: should this return error?
+        :next_player,
         "You have exhausted three tries. Lose a turn!",
         Game.next_player(game)
       }

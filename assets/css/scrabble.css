@@ -67,7 +67,7 @@
   background-color: floralwhite;
 }
 .board-square.quad_word {
-  background-color: Chocolate;
+  background-color: Darkorange;
 }
 .board-square.triple_word {
   background-color: IndianRed;
@@ -139,4 +139,16 @@ th.is-player {
 
 #swap-button, #pass-button {
   background-color: indianred;
+}
+
+tr.game-row td {
+  padding: 1em;
+}
+
+tr.game-over {
+  background-color: lightgray;
+}
+
+tr.your-turn {
+  background-color: #E9F7EF;
 }

@@ -1,8 +1,6 @@
 defmodule ScrabbleEx.Game do
   # FIXME: add a timer
   # FIXME: lose a turn if you propose a non-word, or allow other players to vote
-  # FIXME: pass turn (toward end of game) - allowed when fewer than 7 tiles remaining in bag
-  # FIXME: subtract remaining letters when game ends
 
   alias ScrabbleEx.{Game, Board, Score}
   import Map, only: [put: 3, merge: 2, values: 1, has_key?: 2, update: 4, get: 2, keys: 1]
@@ -173,6 +171,10 @@ defmodule ScrabbleEx.Game do
     "BLANK" => 2
   }
 
+  def counts(:standard), do: @char_counts
+  def counts(:super), do: @super_counts
+  def counts(:mini), do: @mini_counts
+
   def add_player(%Game{current_player: p}) when is_binary(p) do
     {:error, "game already started"}
   end
@@ -186,7 +188,7 @@ defmodule ScrabbleEx.Game do
   end
 
   def remaining_letters(%{racks: racks, bag: bag}, omit) when is_list(omit) do
-    ((Map.values(racks) |> List.flatten()) ++ (bag -- omit))
+    (((Map.values(racks) |> List.flatten()) ++ bag) -- omit)
     |> Enum.sort_by(fn
       "BLANK" -> "ZZZ"
       char -> char
@@ -231,6 +233,7 @@ defmodule ScrabbleEx.Game do
   def next_player(%Game{} = game) do
     count = game.players |> count()
     idx = index_of_player(game.players, game.current_player)
+
     next_player(game, rem(idx + 1, count))
     |> prepare_turn
   end
@@ -338,12 +341,16 @@ defmodule ScrabbleEx.Game do
        |> next_player
        |> check_game_over}
     else
-      {:error, _msg} = e -> e
+      {:error, _msg} = e ->
+        e
 
       {:miss, msg} ->
         case handle_miss(game) do
-          {:ok, :next_player, additional_message, game} -> {:error, :next_player, msg <> "; " <> additional_message, game}
-          {:ok, %Game{} = game} -> {:error, msg, game}
+          {:ok, :next_player, additional_message, game} ->
+            {:error, :next_player, msg <> "; " <> additional_message, game}
+
+          {:ok, %Game{} = game} ->
+            {:error, msg, game}
         end
     end
   end

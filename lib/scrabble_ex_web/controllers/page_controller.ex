@@ -21,7 +21,17 @@ defmodule ScrabbleExWeb.PageController do
   def hello(conn, _params) do
     user = conn.assigns.current_user
     user = ScrabbleEx.Repo.preload(user, :games)
-    games = user.games
+
+    games =
+      user.games
+      |> Enum.sort_by(fn
+        %{state: %{current_player: cp, game_over: go}} ->
+          cond do
+            go -> "zzz"
+            cp == user.username -> "aaa"
+            true -> "bbb #{cp}"
+          end
+      end)
 
     conn
     |> assign(:games, games)

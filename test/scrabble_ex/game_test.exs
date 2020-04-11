@@ -1,6 +1,7 @@
 defmodule ScrabbleEx.GameTest do
   use ExUnit.Case, async: true
   alias ScrabbleEx.{Game, Board, Repo}
+  import Enum, only: [sort: 1, map: 2]
 
   setup do
     :ok = Ecto.Adapters.SQL.Sandbox.checkout(Repo)
@@ -157,10 +158,8 @@ defmodule ScrabbleEx.GameTest do
         112 => "X"
       })
 
-    assert {:error,
-      "these are not words: JOKEX",
-      %Game{scores: scores, board: %{state: state} = board} = game
-    } = result
+    assert {:error, "these are not words: JOKEX",
+            %Game{scores: scores, board: %{state: state} = board} = game} = result
 
     assert game.current_player == "zach"
     assert game.referee.tries_remaining == 2
@@ -174,10 +173,8 @@ defmodule ScrabbleEx.GameTest do
         112 => "S"
       })
 
-    assert {:error,
-      "these are not words: JOXES",
-      %Game{scores: scores, board: %{state: state} = board} = game
-    } = result
+    assert {:error, "these are not words: JOXES",
+            %Game{scores: scores, board: %{state: state} = board} = game} = result
 
     assert game.current_player == "zach"
     assert game.referee.tries_remaining == 1
@@ -191,13 +188,30 @@ defmodule ScrabbleEx.GameTest do
         112 => "J"
       })
 
-    assert {:error,
-      :next_player,
-      "these are not words: SOXEJ; You have exhausted three tries. Lose a turn!",
-      %Game{scores: scores, board: %{state: state} = board} = game
-    } = result
+    assert {:error, :next_player,
+            "these are not words: SOXEJ; You have exhausted three tries. Lose a turn!",
+            %Game{scores: scores, board: %{state: state} = board} = game} = result
 
     assert game.current_player == "kate"
     assert game.referee.tries_remaining == 3
+  end
+
+  test "remaining letters", %{game: game} do
+    remaining_letters = Game.remaining_letters(game) |> sort
+    standard = Game.counts(:standard) |> map(&Tuple.to_list/1) |> sort
+    assert remaining_letters == standard
+
+    expected =
+      Enum.reduce(game.racks["zach"], Game.counts(:standard), fn char, acc ->
+        Map.update!(acc, char, &(&1 - 1))
+      end)
+      |> map(&Tuple.to_list/1)
+      |> sort
+      |> Enum.filter(fn
+        [_, 0] -> false
+        _ -> true
+      end)
+
+    assert sort(Game.remaining_letters(game, "zach")) == expected
   end
 end
