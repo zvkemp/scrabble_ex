@@ -66,16 +66,29 @@
 .board-square {
   background-color: floralwhite;
 }
+
+.board-square.bonus {
+  font-size: 7pt;
+  font-weight: bold;
+  padding: 2pt;
+  text-align: center;
+  line-height: 6pt;
+  color: white;
+}
+
 .board-square.quad_word {
   background-color: Darkorange;
+  /* color: IndianRed; */
 }
 .board-square.triple_word {
   background-color: IndianRed;
 }
 .board-square.double_word {
   background-color: LightPink;
+  color: IndianRed;
 }
 .board-square.quad_letter {
+  color: lightcyan;
   background-color: darkcyan;
 }
 .board-square.triple_letter {
@@ -83,6 +96,7 @@
 }
 .board-square.double_letter {
   background-color: lightcyan;
+  color: skyblue;
 }
 
 .board-square.tile, .rack-square.tile {

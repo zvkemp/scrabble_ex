@@ -2,6 +2,15 @@
 import { select } from 'd3-selection';
 import Rack from './rack';
 
+const boni = {
+  "quad_word": "4x word",
+  "double_word": "2x word",
+  "double_letter": "2x letter",
+  "triple_word": "3x word",
+  "triple_letter": "3x letter",
+  "quad_letter": "4x letter",
+};
+
 class Scrabble {
   constructor(socket) {
     window.game = this
@@ -381,6 +390,10 @@ class Scrabble {
     }
   }
 
+  static get boni() {
+    return boni;
+  }
+
   drawSquares() {
     let container = this.element;
     let data = this.data;
@@ -397,6 +410,7 @@ class Scrabble {
       .enter()
       .append('div')
       .attr('class', d => `board-square ${d.bonus || ''}`)
+      .classed('bonus', d => !!d.bonus)
       .attr('id', (d, i) => `tile-${i}`);
 
     enterJoin.on('click', (d, i) => this.clickSetCursor(i))
@@ -409,6 +423,8 @@ class Scrabble {
     currentSquares.html((d, i) => {
       if (d.character && d.character[0] == ":") {
         return d.character[1];
+      } else if (d.bonus) {
+        return boni[d.bonus]
       } else {
         return d.character || this.proposed[i] || "";
       }
