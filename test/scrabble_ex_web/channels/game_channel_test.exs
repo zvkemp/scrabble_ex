@@ -22,12 +22,12 @@ defmodule ScrabbleExWeb.GameChannelTest do
 
   def build_user_and_token(attrs \\ %{}) do
     user = user_fixture(attrs)
-    token = Phoenix.Token.sign(ScrabbleExWeb.Endpoint, signing_salt, user.id)
+    token = Phoenix.Token.sign(ScrabbleExWeb.Endpoint, signing_salt(), user.id)
     {:ok, user, token}
   end
 
-  def build_and_join(channel_id, %{username: username} = attrs) do
-    {:ok, user, token} = build_user_and_token(attrs)
+  def build_and_join(channel_id, %{username: _} = attrs) do
+    {:ok, _user, token} = build_user_and_token(attrs)
 
     socket(ScrabbleExWeb.UserSocket)
     |> subscribe_and_join(GameChannel, channel_id, %{"token" => token})
@@ -184,7 +184,7 @@ defmodule ScrabbleExWeb.GameChannelTest do
              ]
            } = scores
 
-    game = game_state().racks["kate"]
+    _game = game_state()
 
     ref = push(kate, "swap", %{"112" => "A"})
     assert_reply(ref, :error, %{message: "player does not have [\"A\"]"})
@@ -226,10 +226,6 @@ defmodule ScrabbleExWeb.GameChannelTest do
   end
 
   test "lose a turn", %{zach: zach, kate: kate} do
-    bag = ~w[
-      J O K E S X V O K E R S Q Z T N A L E B B
-    ]
-
     game = game_state()
     # pushed to both clients on join
     # only one is pinned bc the state of the 'bag' at

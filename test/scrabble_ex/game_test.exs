@@ -1,6 +1,6 @@
 defmodule ScrabbleEx.GameTest do
   use ExUnit.Case, async: true
-  alias ScrabbleEx.{Game, Board, Repo}
+  alias ScrabbleEx.{Game, Repo}
   import Enum, only: [sort: 1, map: 2]
 
   setup do
