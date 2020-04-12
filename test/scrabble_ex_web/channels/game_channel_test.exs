@@ -20,23 +20,24 @@ defmodule ScrabbleExWeb.GameChannelTest do
     user
   end
 
+  def build_user_and_token(attrs \\ %{}) do
+    user = user_fixture(attrs)
+    token = Phoenix.Token.sign(ScrabbleExWeb.Endpoint, signing_salt, user.id)
+    {:ok, user, token}
+  end
+
+  def build_and_join(channel_id, %{username: username} = attrs) do
+    {:ok, user, token} = build_user_and_token(attrs)
+
+    socket(ScrabbleExWeb.UserSocket)
+    |> subscribe_and_join(GameChannel, channel_id, %{"token" => token})
+  end
+
   setup do
     start_game_server()
 
-    z_user = user_fixture(%{username: "zach"})
-    k_user = user_fixture(%{username: "kate"})
-
-    z_token = Phoenix.Token.sign(ScrabbleExWeb.Endpoint, signing_salt, z_user.id)
-    k_token = Phoenix.Token.sign(ScrabbleExWeb.Endpoint, signing_salt, k_user.id)
-
-    {:ok, _, zach} =
-      socket(ScrabbleExWeb.UserSocket)
-      |> subscribe_and_join(GameChannel, "game:default", %{"token" => z_token})
-
-    {:ok, _, kate} =
-      socket(ScrabbleExWeb.UserSocket)
-      |> subscribe_and_join(GameChannel, "game:default", %{"token" => k_token})
-
+    {:ok, _, zach} = build_and_join("game:default", %{username: "zach"})
+    {:ok, _, kate} = build_and_join("game:default", %{username: "kate"})
     {:ok, %{zach: zach, kate: kate}}
   end
 
@@ -214,5 +215,16 @@ defmodule ScrabbleExWeb.GameChannelTest do
     ref = push(zach, "swap", %{"112" => "J"})
     assert_reply(ref, :ok, %{rack: new_rack})
     assert game_at_start.racks["zach"] != game_state().racks["zach"]
+  end
+
+  @tag :focus
+  test "joining after start", %{zach: zach} do
+    ref = push(zach, "start")
+
+    assert_reply(ref, :ok, %{})
+    assert %{current_player: "zach"} = game_state()
+
+    assert {:error, %{reason: "game already started"}} =
+             build_and_join("game:default", %{username: "frances"})
   end
 end

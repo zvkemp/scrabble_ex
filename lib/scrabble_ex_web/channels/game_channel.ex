@@ -64,7 +64,7 @@ defmodule ScrabbleExWeb.GameChannel do
     case call(socket, :start_game) do
       {:ok, game} ->
         broadcast_game_state(socket, game)
-        {:noreply, socket}
+        {:reply, {:ok, %{}}, socket}
 
       {:error, msg} ->
         reply_error(socket, msg)

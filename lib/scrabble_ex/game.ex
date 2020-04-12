@@ -175,7 +175,7 @@ defmodule ScrabbleEx.Game do
   def counts(:super), do: @super_counts
   def counts(:mini), do: @mini_counts
 
-  def add_player(%Game{current_player: p}) when is_binary(p) do
+  def add_player(%Game{current_player: p}, _username) when is_binary(p) do
     {:error, "game already started"}
   end
 
@@ -201,7 +201,7 @@ defmodule ScrabbleEx.Game do
     |> Enum.reverse()
   end
 
-  def add_player(%Game{} = game, player) do
+  def add_player(%Game{current_player: nil} = game, player) do
     case has_key?(game.racks, player) do
       false ->
         new_players = game.players ++ [player]

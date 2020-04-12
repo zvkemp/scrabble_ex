@@ -526,7 +526,7 @@ class Scrabble {
     selection.enter()
       .append('button')
       .attr('class', 'start-button')
-      .html("click here to start")
+      .html("click here to start after everyone has joined")
       .on("click", () => { channel.push("start") });
 
     selection.exit().remove();
