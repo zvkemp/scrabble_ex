@@ -94,9 +94,12 @@ defmodule ScrabbleEx.GameServer do
 
   defp apply_game_fn(name, args, game, ok_callback) do
     case apply(Game, name, [game | args]) do
-      {:ok, new_game} ->
+      {:ok, %Game{} = new_game} ->
         ok_callback.(new_game)
         {:reply, {:ok, new_game}, save_state(new_game)}
+
+      {:ok, :rejoin} ->
+        {:reply, {:ok, :rejoin}, game}
 
       {:error, _msg} = e ->
         {:reply, e, game}

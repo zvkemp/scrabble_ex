@@ -184,8 +184,12 @@ defmodule ScrabbleEx.Game do
   def counts(:super), do: @super_counts
   def counts(:mini), do: @mini_counts
 
-  def add_player(%Game{current_player: p}, _username) when is_binary(p) do
-    {:error, "game already started"}
+  def add_player(%Game{current_player: p, players: px}, username) when is_binary(p) do
+    if Enum.member?(px, username) do
+      {:ok, :rejoin}
+    else
+      {:error, "game already started"}
+    end
   end
 
   def remaining_letters(game) do
