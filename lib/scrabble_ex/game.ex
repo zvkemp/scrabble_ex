@@ -1,6 +1,7 @@
 defmodule ScrabbleEx.Game do
   # FIXME: add a timer
   # FIXME: lose a turn if you propose a non-word, or allow other players to vote
+  # FIXME: better 'game_over' handling
 
   alias ScrabbleEx.{Game, Board, Score}
   import Map, only: [put: 3, merge: 2, values: 1, has_key?: 2, update: 4, get: 2, keys: 1]
@@ -38,7 +39,8 @@ defmodule ScrabbleEx.Game do
     :name,
     :game_over,
     :pass_count,
-    :referee
+    :referee,
+    opts: []
   ]
 
   defimpl Jason.Encoder, for: [__MODULE__] do
@@ -60,31 +62,38 @@ defmodule ScrabbleEx.Game do
     end
   end
 
-  def new("super:" <> _ = name, players: players) do
-    new(name, players: players, board: Board.super_new(), bag: new_super_bag())
+  def new(name, opts \\ [])
+
+  def new("super:" <> _ = name, opts) do
+    _new(
+      name,
+      Keyword.merge(opts, board: Board.super_new(), bag: new_super_bag())
+    )
   end
 
-  def new(name, players: players) do
-    new(name, players: players, board: Board.new())
+  def new(name, opts) do
+    _new(name, opts)
   end
 
-  def new(name, players: players, board: board) do
-    new(name, players: players, board: board, bag: new_bag())
-  end
+  # players: players, board: board, bag: bag) do
+  defp _new(name, opts) do
+    import Keyword, only: [fetch!: 2, get: 2, get: 3, get_lazy: 3]
 
-  def new(name, players: players, board: board, bag: bag) do
+    players = get(opts, :players, [])
+
     %__MODULE__{
       players: players,
       current_player: nil,
-      board: board,
+      board: get_lazy(opts, :board, &Board.new/0),
       log: [],
-      bag: bag,
+      bag: get_lazy(opts, :bag, &new_bag/0),
       scores: players |> map(&{&1, []}) |> into(%{}),
       racks: players |> map(&{&1, []}) |> into(%{}),
       name: name,
       game_over: false,
       pass_count: 0,
-      referee: struct(ScrabbleEx.Referee)
+      referee: struct(ScrabbleEx.Referee),
+      opts: [start_at: get(opts, :start_at, :rand)]
     }
     |> fill_racks
   end
@@ -227,7 +236,13 @@ defmodule ScrabbleEx.Game do
   end
 
   def next_player(%Game{current_player: nil} = game) do
-    next_player(game, 0)
+    idx =
+      case Keyword.get(game.opts || [], :start_at, :rand) do
+        :rand -> :rand.uniform(count(game.players)) - 1
+        n when is_integer(n) -> n
+      end
+
+    next_player(game, idx)
   end
 
   def next_player(%Game{} = game) do

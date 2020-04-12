@@ -6,7 +6,11 @@ defmodule ScrabbleEx.GameTest do
   setup do
     :ok = Ecto.Adapters.SQL.Sandbox.checkout(Repo)
     id = :crypto.strong_rand_bytes(6) |> Base.encode64()
-    {:ok, game} = Game.new(id, players: ["zach", "kate"]) |> Game.start()
+
+    {:ok, game} =
+      Game.new(id, players: ["zach", "kate"], start_at: 0)
+      |> Game.start()
+
     %{game: game}
   end
 
@@ -58,7 +62,7 @@ defmodule ScrabbleEx.GameTest do
     ]
 
     {:ok, game} =
-      Game.new("id", players: ["zach", "kate"], board: Board.new(), bag: bag)
+      Game.new("id", players: ["zach", "kate"], bag: bag, start_at: 0)
       |> Game.start()
 
     Game.propose(game, "zach", %{
@@ -89,7 +93,7 @@ defmodule ScrabbleEx.GameTest do
     ]
 
     {:ok, game} =
-      Game.new("foo", players: ["zach", "kate"], board: Board.new(), bag: bag)
+      Game.new("foo", players: ["zach", "kate"], bag: bag, start_at: 0)
       |> Game.start()
 
     result =
@@ -146,7 +150,7 @@ defmodule ScrabbleEx.GameTest do
     ]
 
     {:ok, game} =
-      Game.new("foo", players: ["zach", "kate"], board: Board.new(), bag: bag)
+      Game.new("foo", players: ["zach", "kate"], bag: bag, start_at: 0)
       |> Game.start()
 
     result =

@@ -35,7 +35,6 @@ defmodule ScrabbleExWeb.GameChannel do
 
   def handle_info(:after_join, socket) do
     game = call(socket, :state)
-    # broadcast!(socket, "info", %{message: "#{socket.assigns.player} joined"})
     broadcast!(socket, "state", game)
     push(socket, "rack", rack_payload(socket, game))
     {:noreply, socket}
@@ -61,66 +60,40 @@ defmodule ScrabbleExWeb.GameChannel do
   end
 
   def handle_in("start", _payload, socket) do
-    case call(socket, :start_game) do
-      {:ok, game} ->
-        broadcast_game_state(socket, game)
-        {:reply, {:ok, %{}}, socket}
-
-      {:error, msg} ->
-        reply_error(socket, msg)
-    end
+    call(socket, :start_game)
+    |> broadcast_call_result(socket, reply: :ok)
   end
 
   def handle_in("swap", payload, socket) do
-    case call(socket, {:swap, socket.assigns.player, payload}) do
-      {:ok, %{racks: racks} = game} ->
-        broadcast_game_state(
-          socket,
-          game,
-          "#{socket.assigns.player} swapped #{payload |> Enum.count()} tiles."
-        )
-
-        {:reply, {:ok, %{rack: racks[socket.assigns.player]}}, socket}
-
-      {:error, msg} ->
-        {:reply, {:error, %{message: msg}}, socket}
-    end
+    call(socket, {:swap, socket.assigns.player, payload})
+    |> broadcast_call_result(
+      socket,
+      reply: :rack,
+      success_msg: "#{socket.assigns.player} swapped #{payload |> Enum.count()} tiles."
+    )
   end
 
+  # FIXME: game could end here
   def handle_in("pass", payload, socket) do
-    case call(socket, {:pass, socket.assigns.player}) do
-      {:ok, game} ->
-        broadcast_game_state(
-          socket,
-          game,
-          "#{socket.assigns.player} passed."
-        )
-
-        {:noreply, socket}
-
-      {:error, msg} ->
-        {:reply, {:error, %{message: msg}}, socket}
-    end
+    call(socket, {:pass, socket.assigns.player})
+    |> broadcast_call_result(socket, success_msg: "#{socket.assigns.player} passed.")
   end
 
   # FIXME: rename "submit_payload" => "play"
   def handle_in("submit_payload", payload, socket) do
-    payload = Enum.map(payload, fn {k, v} -> {String.to_integer(k), v} end) |> Enum.into(%{})
-
-    case call(socket, {:play, socket.assigns.player, payload}) do
-      {:ok, game} ->
-        broadcast_game_state(socket, game)
-        reply_with_rack(socket, game)
-
-      {:error, msg} ->
-        reply_error(socket, msg)
-
-      {:error, :next_player, msg, game} ->
-        broadcast_game_state(socket, game)
-        broadcast_admonishment(socket, game)
-        push(socket, "rack", rack_payload(socket, game))
-        reply_error(socket, msg)
-    end
+    call(socket, {:play, socket.assigns.player, payload})
+    |> broadcast_call_result(
+      socket,
+      reply: :rack,
+      additional_matches: fn
+        {:error, :next_player, msg, game} ->
+          broadcast_game_state(socket, game)
+          broadcast_admonishment(socket, game)
+          # reset the player's rack
+          push(socket, "rack", rack_payload(socket, game))
+          reply_error(socket, msg)
+      end
+    )
   end
 
   defp find_or_start_game(id) do
@@ -165,6 +138,30 @@ defmodule ScrabbleExWeb.GameChannel do
     broadcast!(socket, "info", %{
       message: "#{socket.assigns.player} lost a turn due to illegal maneuvers."
     })
+  end
+
+  defp broadcast_call_result(result, socket, opts \\ []) do
+    case result do
+      {:ok, %{racks: racks} = game} ->
+        broadcast_game_state(
+          socket,
+          game,
+          Keyword.get(opts, :success_msg)
+        )
+
+        case Keyword.get(opts, :reply) do
+          nil -> {:noreply, socket}
+          :rack -> reply_with_rack(socket, game)
+          :ok -> {:reply, {:ok, %{}}, socket}
+        end
+
+      {:error, msg} ->
+        reply_error(socket, msg)
+
+      # If these patterns did not match, require a callback function to match the actual result.
+      _ ->
+        Keyword.fetch!(opts, :additional_matches).(result)
+    end
   end
 
   defp reply_error(socket, msg) do

@@ -51,7 +51,7 @@ defmodule ScrabbleExWeb.GameChannelTest do
       J O K E S X V O K E R S Q Z T N A L E B B
     ]
 
-    game = %Game{game_state() | bag: bag}
+    game = %Game{game_state() | bag: bag, opts: [start_at: 0]}
     GenServer.call({:global, "game:default"}, {:set_state, game})
   end
 
@@ -92,8 +92,6 @@ defmodule ScrabbleExWeb.GameChannelTest do
   test "full game", %{zach: zach, kate: kate} do
     game = game_state()
     # pushed to both clients on join
-    # only one is pinned bc the state of the 'bag' at
-    # either push is different. Which means: FIXME: don't serialize the bag
     assert_push("state", ^game)
     assert_push("state", ^game)
     assert %Game{current_player: nil} = game
@@ -217,7 +215,6 @@ defmodule ScrabbleExWeb.GameChannelTest do
     assert game_at_start.racks["zach"] != game_state().racks["zach"]
   end
 
-  @tag :focus
   test "joining after start", %{zach: zach} do
     ref = push(zach, "start")
 
@@ -226,5 +223,89 @@ defmodule ScrabbleExWeb.GameChannelTest do
 
     assert {:error, %{reason: "game already started"}} =
              build_and_join("game:default", %{username: "frances"})
+  end
+
+  test "lose a turn", %{zach: zach, kate: kate} do
+    bag = ~w[
+      J O K E S X V O K E R S Q Z T N A L E B B
+    ]
+
+    game = game_state()
+    # pushed to both clients on join
+    # only one is pinned bc the state of the 'bag' at
+    assert_push("state", ^game)
+    assert_push("state", ^game)
+    assert %Game{current_player: nil} = game
+
+    ref = push(kate, "start")
+    assert_reply(ref, :ok, %{})
+
+    assert_broadcast("state", %Game{current_player: "zach"})
+    assert_broadcast("state", %Game{current_player: "zach"})
+
+    ref =
+      push(zach, "submit_payload", %{
+        "52" => "J",
+        "67" => "O",
+        "82" => "K",
+        "97" => "E",
+        "112" => "X"
+      })
+
+    assert_reply(ref, :error, %{message: "these are not words: JOKEX"})
+
+    assert game_state().current_player == "zach"
+    assert game_state().referee.tries_remaining == 2
+
+    ref =
+      push(zach, "submit_payload", %{
+        "52" => "J",
+        "67" => "O",
+        "82" => "X",
+        "97" => "E",
+        "112" => "S"
+      })
+
+    assert_reply(ref, :error, %{message: "these are not words: JOXES"})
+
+    assert game_state().current_player == "zach"
+    assert game_state().referee.tries_remaining == 1
+
+    ref =
+      push(zach, "submit_payload", %{
+        "52" => "J",
+        "67" => "O",
+        "82" => "K",
+        "97" => "E",
+        "112" => "X"
+      })
+
+    assert_reply(ref, :error, %{
+      message: "these are not words: JOKEX; You have exhausted three tries. Lose a turn!"
+    })
+
+    game = game_state()
+
+    z_rack = game.racks["zach"]
+    # rack is pushed to reset state
+    assert_push("rack", %{rack: ^z_rack})
+    assert(game.current_player == "kate")
+    assert(game.referee.tries_remaining == 3)
+
+    assert_broadcast("state", ^game)
+    assert_broadcast("state", ^game)
+    assert_broadcast("info", %{message: "zach lost a turn due to illegal maneuvers."})
+  end
+
+  def flush_messages(timeout \\ 100) do
+    receive do
+      %Phoenix.Socket.Message{} ->
+        flush_messages()
+
+      %Phoenix.Socket.Broadcast{} ->
+        flush_messages()
+    after
+      timeout -> nil
+    end
   end
 end
