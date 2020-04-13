@@ -1,11 +1,23 @@
-.board-header input {
+#board-header input {
   width: 400px;
 }
 
-.game-container {
+#game-container {
+  display: flex;
+  flex-direction: row;
   width: fit-content;
 }
-.board-container {
+
+#board-main {
+}
+
+#board-footer {
+  display: flex;
+  flex-direction: row;
+  width: fit-content;
+}
+
+#board-container {
   display: grid;
   width: fit-content;
   /* FIXME: use configurable board size */
@@ -15,18 +27,31 @@
   /* max-width: 600px; */
   border: 9px solid MistyRose;
   padding: 4px;
+  flex: 1;
+}
+
+#remaining-letters {
+  font-size: 8pt;
+  font-weight: bold;
+  line-height: 12pt;
+  padding: 10px;
+  flex: 1;
+  text-align: center;
 }
 
 .flash-container .alert {
   font-size: 9pt;
-  padding: 1em;
+  /* display: inline-block; */
+  margin-left: 10pt;
+  padding: 7pt;
 }
 
-.flash-container .alert:empty {
-  display: block;
-}
 
-.board-container, #rack-container {
+/* .flash-container .alert:empty { */
+/*   display: block; */
+/* } */
+
+#board-container, #rack-container {
   -webkit-touch-callout: none; 
   -webkit-user-select: none; 
   -khtml-user-select: none;
@@ -35,12 +60,12 @@
   user-select: none;
 }
 
-.board-container.super {
+#board-container.super {
   grid-template-columns: repeat(21, 30px); 
   grid-template-rows: repeat(21, 30px);
 }
 
-.board-container.current {
+#board-container.current {
   border-color: green;
 }
 

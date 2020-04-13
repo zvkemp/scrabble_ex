@@ -21,10 +21,11 @@ class Scrabble {
     this.socket = socket
     this.cursor = -1;
     this.size = 15;
-    this.element = select("section.board-container");
-    this.header = select("section.board-header");
+    this.element = select("section#board-container");
+    this.header = select("section#board-header");
     this.rack_container = select("section.rack-container");
     this.flash_container = select("section.flash-container p");
+    this.footer = select("section#board-footer");
     this.direction = 'h'; // or 'v';
     this._current_player = undefined;
     this.proposed = {};
@@ -92,9 +93,11 @@ class Scrabble {
     if (document.hasFocus()) { return }
 
     if (this.player === this._current_player) {
+      if (this.notification !== undefined) { this.notification.close() }
+
       if (Notification.permission === "granted") {
-        let notification = new Notification("ScrabbleEx", { body: "It is your turn" });
-        notification.onclick = function() {
+        this.notification = new Notification("ScrabbleEx", { body: "It is your turn" });
+        this.notification.onclick = function() {
           window.focus();
         }
       }
@@ -132,12 +135,16 @@ class Scrabble {
     this.first_load = false;
   }
 
-  handleRack({ rack, remaining }) {
-    if (rack) {
+  handleRack({ rack, hmac, remaining }) {
+    // FIXME: this hmac may not be necessary
+    if (rack && this.hmac !== hmac) {
+      this.hmac = hmac;
       this.rack = rack;
     }
 
     if (remaining) {
+      let formatted = remaining.map(f => f.join("&ndash;")).join("<br />");
+      select('#remaining-letters').html(formatted);
       console.info("remaining letters:\n\n", remaining.map(f => f.join(": ")).join("\n"))
     }
   }
@@ -403,7 +410,8 @@ class Scrabble {
 
     if (data.length === 441) {
       this.size = 21; // FIXME: better way to set this once
-      container.classed('super', true)
+      container.classed('super', true);
+      this.flash_container.classed('super', true);
     }
 
     let squares = container.selectAll('div.board-square').data(data);

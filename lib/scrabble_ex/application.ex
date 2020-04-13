@@ -14,7 +14,8 @@ defmodule ScrabbleEx.Application do
       ScrabbleExWeb.Endpoint,
       # Starts a worker by calling: ScrabbleEx.Worker.start_link(arg)
       # {ScrabbleEx.Worker, arg},
-      ScrabbleEx.Dictionary
+      ScrabbleEx.Dictionary,
+      ScrabbleExWeb.Presence
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html

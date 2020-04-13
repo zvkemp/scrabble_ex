@@ -19,11 +19,22 @@ defmodule ScrabbleEx.Dictionary do
     {:reply, MapSet.member?(state, String.downcase(word)), state}
   end
 
+  def handle_call(:two_letter_words, _from, state) do
+    {:reply, Enum.filter(state, fn
+      <<_::bytes-size(2)>> -> true
+      _ -> false
+    end), state}
+  end
+
   def show_legal_words(words) do
     words
     |> Enum.reduce(%{}, fn word, map ->
       Map.put(map, word, word?(word))
     end)
+  end
+
+  def two_letter_words do
+    GenServer.call(__MODULE__, :two_letter_words)
   end
 
   def load_words_from_file(path) do

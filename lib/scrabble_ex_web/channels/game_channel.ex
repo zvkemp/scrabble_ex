@@ -1,6 +1,7 @@
 defmodule ScrabbleExWeb.GameChannel do
   use Phoenix.Channel
   alias ScrabbleEx.Game
+  alias ScrabbleExWeb.Presence
   import ScrabbleExWeb.Endpoint, only: [signing_salt: 0]
 
   def join("game:lobby", _message, socket) do
@@ -37,10 +38,13 @@ defmodule ScrabbleExWeb.GameChannel do
     game = call(socket, :state)
     broadcast!(socket, "state", game)
     push(socket, "rack", rack_payload(socket, game))
+    # FIXME: how should this be used?
+    Presence.track(socket, socket.assigns.user_id, %{})
     {:noreply, socket}
   end
 
   def handle_in("proposed", payload, socket) do
+    # IO.inspect(Presence.list(socket))
     game = call(socket, :state)
 
     if game.current_player == socket.assigns.player do
@@ -116,8 +120,14 @@ defmodule ScrabbleExWeb.GameChannel do
   end
 
   defp rack_payload(socket, %{racks: racks} = game) do
+    rack = racks[socket.assigns.player]
+    # provide HMAC to avoid resetting client state unecessarily, but ensure it stays in sync
+    # FIXME: hmac may  not be necessary
+    hmac = :crypto.hmac(:sha, game.name, rack) |> Base.encode64
+
     %{
-      rack: racks[socket.assigns.player],
+      rack: rack,
+      hmac: hmac,
       remaining: Game.remaining_letters(game, socket.assigns.player)
     }
   end
@@ -166,5 +176,14 @@ defmodule ScrabbleExWeb.GameChannel do
 
   defp reply_error(socket, msg) do
     {:reply, {:error, %{message: msg}}, socket}
+  end
+
+  intercept ["state"]
+
+  # FIXME: combine these two pushes?
+  def handle_out("state", game, socket) do
+    push(socket, "state", game)
+    push(socket, "rack", rack_payload(socket, game))
+    {:noreply, socket}
   end
 end
