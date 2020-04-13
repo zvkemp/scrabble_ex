@@ -418,13 +418,13 @@ class Scrabble {
     let enterJoin = squares
       .enter()
       .append('div')
-      .attr('class', d => `board-square ${d.bonus || ''}`)
-      .classed('bonus', d => !!d.bonus)
       .attr('id', (d, i) => `tile-${i}`);
 
     enterJoin.on('click', (d, i) => this.clickSetCursor(i))
 
     let currentSquares = squares.merge(enterJoin);
+    currentSquares.attr('class', d => `board-square ${d.bonus || ''} letter-${d && d.character}`)
+    currentSquares.classed('bonus', d => !!d.bonus)
     currentSquares.classed("tile", d => d.character);
     currentSquares.classed("tile-blank", d => d.character && d.character[0] == ":");
     currentSquares.classed("tile-proposed", (d, i) => this.proposed[i]);

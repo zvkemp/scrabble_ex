@@ -133,6 +133,10 @@
   color: black;
 }
 
+.rack-square.tile {
+  font-size: 20px;
+}
+
 .rack-square.tile.empty {
   border: 1px dotted gray;
   background-color: white;
@@ -195,4 +199,70 @@ tr.game-over {
 
 tr.your-turn {
   background-color: #E9F7EF;
+}
+
+.board-square::after {
+  color: rgba(0, 0, 0, 0.4);
+  font-size: 7pt;
+  font-weight: bold;
+  transform: translate(50%, 50%);
+  position: absolute;
+  text-align: right;
+  transform: translate(7pt, 7pt);
+}
+
+.rack-square::after {
+  position: absolute;
+  color: rgba(0, 0, 0, 0.8);
+  font-size: 7pt;
+  font-weight: bold;
+  text-align: right;
+  transform: translate(8pt, 8pt);
+}
+
+.letter-A::after,
+.letter-E::after,
+.letter-I::after,
+.letter-L::after,
+.letter-N::after,
+.letter-O::after,
+.letter-R::after,
+.letter-S::after,
+.letter-T::after,
+.letter-U::after {
+  content: "1";
+}
+
+.letter-D::after,
+.letter-G::after {
+  content: "2";
+}
+
+.letter-B::after,
+.letter-C::after,
+.letter-M::after,
+.letter-P::after {
+  content: "3";
+}
+
+.letter-F::after,
+.letter-H::after,
+.letter-V::after,
+.letter-W::after,
+.letter-Y::after {
+  content: "4";
+}
+
+.letter-K::after {
+  content: "5";
+}
+
+.letter-J::after,
+.letter-X::after {
+  content: "8";
+}
+
+.letter-Q::after,
+.letter-Z::after {
+  content: "10"
 }

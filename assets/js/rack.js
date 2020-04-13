@@ -174,6 +174,8 @@ class Rack {
 
     let currentSquares = squares.merge(enterJoin);
     currentSquares.html(d => d && (d.char === "BLANK" ? "" : d.char));
+    currentSquares.attr('class', d => `rack-square tile letter-${d && d.char}`)
+    currentSquares.classed('data-letter', d => d && d.char);
     currentSquares.classed("empty", d => d === undefined);
     currentSquares.classed("used", d => d && d.used)
 
