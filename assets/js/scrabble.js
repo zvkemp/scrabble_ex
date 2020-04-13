@@ -47,8 +47,15 @@ class Scrabble {
       .receive("ok", resp => { console.log(`joined game:${this.game_id}`, resp) })
       .receive("error", resp => { console.error("unable to join", resp) })
 
+    // FIXME: remove after deploy
     this.channel.on("state", payload => {
       this.handleGameState(payload)
+    });
+
+    this.channel.on("player-state", ({game, rack, remaining}) => {
+      if (game) { this.handleGameState({ game }) }
+      if (rack) { this.handleRack({ rack }) }
+      if (remaining) { this.handleRemaining({ remaining }) }
     });
 
     this.channel.on("new_proposed", payload => {
@@ -105,21 +112,28 @@ class Scrabble {
   }
 
   handleGameState(payload) {
-    if (payload.current_player) {
-      this.current_player = payload.current_player // FIXME: where does this logic belong?
+    let game;
+    if (payload && payload.game) {
+      game = payload.game
+    } else {
+      game = payload
     }
 
-    if (payload.board) {
+    if (game.current_player) {
+      this.current_player = game.current_player // FIXME: where does this logic belong?
+    }
+
+    if (game.board) {
       this.proposed = {};
-      this.data = payload.board;
+      this.data = game.board;
     }
 
-    this.scores = payload.scores;
-    this.players = payload.players;
+    this.scores = game.scores;
+    this.players = game.players;
 
-    this.gameOver = payload.game_over;
-    this.passAllowed = payload.pass_allowed;
-    this.swapAllowed = payload.swap_allowed;
+    this.gameOver = game.game_over;
+    this.passAllowed = game.pass_allowed;
+    this.swapAllowed = game.swap_allowed;
 
     if (this.gameOver) {
       this.current_player = null;
@@ -135,17 +149,20 @@ class Scrabble {
     this.first_load = false;
   }
 
-  handleRack({ rack, hmac, remaining }) {
-    // FIXME: this hmac may not be necessary
-    if (rack && this.hmac !== hmac) {
-      this.hmac = hmac;
+  handleRack({ rack, remaining }) {
+    if (rack) {
       this.rack = rack;
     }
 
+    if (remaining) { // FIXME: remove
+      this.handleRemaining(remaining)
+    }
+  }
+
+  handleRemaining({ remaining }) {
     if (remaining) {
       let formatted = remaining.map(f => f.join("&ndash;")).join("<br />");
       select('#remaining-letters').html(formatted);
-      console.info("remaining letters:\n\n", remaining.map(f => f.join(": ")).join("\n"))
     }
   }
 

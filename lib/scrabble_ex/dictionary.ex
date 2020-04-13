@@ -20,10 +20,11 @@ defmodule ScrabbleEx.Dictionary do
   end
 
   def handle_call(:two_letter_words, _from, state) do
-    {:reply, Enum.filter(state, fn
-      <<_::bytes-size(2)>> -> true
-      _ -> false
-    end), state}
+    {:reply,
+     Enum.filter(state, fn
+       <<_::bytes-size(2)>> -> true
+       _ -> false
+     end), state}
   end
 
   def show_legal_words(words) do

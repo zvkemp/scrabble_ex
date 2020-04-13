@@ -1,6 +1,7 @@
 defmodule ScrabbleExWeb.GameChannel do
   use Phoenix.Channel
   alias ScrabbleEx.Game
+  require ScrabbleExWeb.Presence
   alias ScrabbleExWeb.Presence
   import ScrabbleExWeb.Endpoint, only: [signing_salt: 0]
 
@@ -36,15 +37,13 @@ defmodule ScrabbleExWeb.GameChannel do
 
   def handle_info(:after_join, socket) do
     game = call(socket, :state)
-    broadcast!(socket, "state", game)
-    push(socket, "rack", rack_payload(socket, game))
+    broadcast!(socket, "player-state", %{game: game})
     # FIXME: how should this be used?
     Presence.track(socket, socket.assigns.user_id, %{})
     {:noreply, socket}
   end
 
   def handle_in("proposed", payload, socket) do
-    # IO.inspect(Presence.list(socket))
     game = call(socket, :state)
 
     if game.current_player == socket.assigns.player do
@@ -72,7 +71,7 @@ defmodule ScrabbleExWeb.GameChannel do
     call(socket, {:swap, socket.assigns.player, payload})
     |> broadcast_call_result(
       socket,
-      reply: :rack,
+      reply: :ok,
       success_msg: "#{socket.assigns.player} swapped #{payload |> Enum.count()} tiles."
     )
   end
@@ -80,7 +79,7 @@ defmodule ScrabbleExWeb.GameChannel do
   # FIXME: game could end here
   def handle_in("pass", payload, socket) do
     call(socket, {:pass, socket.assigns.player})
-    |> broadcast_call_result(socket, success_msg: "#{socket.assigns.player} passed.")
+    |> broadcast_call_result(socket, reply: :ok, success_msg: "#{socket.assigns.player} passed.")
   end
 
   # FIXME: rename "submit_payload" => "play"
@@ -88,13 +87,11 @@ defmodule ScrabbleExWeb.GameChannel do
     call(socket, {:play, socket.assigns.player, payload})
     |> broadcast_call_result(
       socket,
-      reply: :rack,
+      reply: :ok,
       additional_matches: fn
         {:error, :next_player, msg, game} ->
           broadcast_game_state(socket, game)
           broadcast_admonishment(socket, game)
-          # reset the player's rack
-          push(socket, "rack", rack_payload(socket, game))
           reply_error(socket, msg)
       end
     )
@@ -115,20 +112,17 @@ defmodule ScrabbleExWeb.GameChannel do
   defp call(pid, term) when is_pid(pid), do: GenServer.call(pid, term)
   defp call(%Phoenix.Socket{} = socket, term), do: call(find_game_pid(socket), term)
 
-  defp reply_with_rack(socket, %Game{} = game) do
-    {:reply, {:ok, rack_payload(socket, game)}, socket}
-  end
-
-  defp rack_payload(socket, %{racks: racks} = game) do
+  # player-specific payload.
+  # The game serializer excludes the bag order and racks
+  defp player_payload(socket, %{racks: racks} = game) do
     rack = racks[socket.assigns.player]
-    # provide HMAC to avoid resetting client state unecessarily, but ensure it stays in sync
-    # FIXME: hmac may  not be necessary
-    hmac = :crypto.hmac(:sha, game.name, rack) |> Base.encode64
 
     %{
       rack: rack,
-      hmac: hmac,
-      remaining: Game.remaining_letters(game, socket.assigns.player)
+      remaining: Game.remaining_letters(game, socket.assigns.player),
+      game: game,
+      # mainly added for matching in tests
+      join_ref: socket.join_ref
     }
   end
 
@@ -140,7 +134,7 @@ defmodule ScrabbleExWeb.GameChannel do
 
     msg = if additional_msg, do: "#{additional_msg} #{msg}", else: msg
 
-    broadcast!(socket, "state", game)
+    broadcast!(socket, "player-state", game)
     broadcast!(socket, "info", %{message: msg})
   end
 
@@ -161,7 +155,6 @@ defmodule ScrabbleExWeb.GameChannel do
 
         case Keyword.get(opts, :reply) do
           nil -> {:noreply, socket}
-          :rack -> reply_with_rack(socket, game)
           :ok -> {:reply, {:ok, %{}}, socket}
         end
 
@@ -178,12 +171,14 @@ defmodule ScrabbleExWeb.GameChannel do
     {:reply, {:error, %{message: msg}}, socket}
   end
 
-  intercept ["state"]
+  intercept ["player-state"]
 
-  # FIXME: combine these two pushes?
-  def handle_out("state", game, socket) do
-    push(socket, "state", game)
-    push(socket, "rack", rack_payload(socket, game))
+  def handle_out("player-state", %Game{} = game, socket) do
+    handle_out("player-state", %{game: game}, socket)
+  end
+
+  def handle_out("player-state", %{game: game}, socket) do
+    push(socket, "player-state", player_payload(socket, game))
     {:noreply, socket}
   end
 end
