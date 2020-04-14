@@ -334,7 +334,8 @@ defmodule ScrabbleEx.Game do
     first_turn = empty?(log)
     turn = %Turn{player: player, letter_map: letter_map}
 
-    with :ok <- validate_play(turn, game),
+    with :ok <- validate_current_player(game, player),
+         :ok <- validate_play(turn, game),
          {:ok, new_board} <- Board.merge_and_validate(board, letter_map),
          {:ok, score} <- Score.valid_score(board, new_board, letter_map, first_turn) do
       new_scores = update(scores, player, [score], fn xs -> [score | xs] end)
@@ -390,23 +391,25 @@ defmodule ScrabbleEx.Game do
     struct(ScrabbleEx.Referee)
   end
 
-  def pass(%Game{game_over: true} = game, player) do
-    play(game, player, %{})
-  end
-
   def swap(%Game{game_over: true} = game, player, _str) do
     play(game, player, %{})
   end
 
+  def pass(%Game{game_over: true} = game, player) do
+    play(game, player, %{})
+  end
+
   def pass(game, player) do
-    if pass_allowed?(game) do
+    with :ok <- validate_current_player(game, player),
+         true <- pass_allowed?(game) do
       {:ok,
        game
        |> Map.update(:pass_count, 1, &(&1 + 1))
        |> next_player
        |> check_game_over}
     else
-      {:error, "you shall not pass"}
+      false -> {:error, "you shall not pass"}
+      {:error, _} = e -> e
     end
   end
 
@@ -424,7 +427,8 @@ defmodule ScrabbleEx.Game do
   end
 
   def swap(%Game{} = game, player, swapped) when is_list(swapped) do
-    with :ok <- validate_swap(game, player, swapped),
+    with :ok <- validate_current_player(game, player),
+         :ok <- validate_swap(game, player, swapped),
          :ok <- validate_swappability(game) do
       count = swapped |> count()
       new_tiles = game.bag |> take(count)
@@ -655,7 +659,7 @@ defmodule ScrabbleEx.Game do
   # FIXME: subtract remaining tiles from scores
   defp check_game_over(%Game{racks: racks} = game) do
     if any?(racks, fn {_player, rack} -> empty?(rack) end) ||
-         (game.pass_count && game.pass_count > count(game.players) * 2) do
+         (game.pass_count && game.pass_count >= count(game.players) * 2) do
       game
       |> put(:game_over, true)
       |> subtract_remaining_tiles
@@ -679,6 +683,14 @@ defmodule ScrabbleEx.Game do
     case validate_swappability(game) do
       :ok -> true
       _ -> false
+    end
+  end
+
+  defp validate_current_player(game, player) do
+    if game.current_player == player do
+      :ok
+    else
+      {:error, "it is not #{player}'s turn"}
     end
   end
 

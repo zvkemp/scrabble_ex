@@ -52,8 +52,7 @@ defmodule ScrabbleExWeb.GameChannel do
           # FIXME: make this broadcast a game option
           # broadcast!(socket, "new_proposed", payload)
 
-          response = %{message: scores |> Enum.map(&Enum.join(&1, ",")) |> Enum.join(" ")}
-
+          response = %{message: scores |> Enum.map(&Enum.join(&1, ": ")) |> Enum.join(", ")}
           {:reply, {:ok, response}, socket}
 
         {:error, m} ->

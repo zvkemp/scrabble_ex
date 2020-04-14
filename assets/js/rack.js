@@ -120,11 +120,6 @@ class Rack {
     }
   }
 
-  // FIXME: remove
-  get letters() {
-    return this._letters;
-  }
-
   // FIXME: rename
   set letters(newLetters) {
     let searchIndices = {};
@@ -203,7 +198,7 @@ class Rack {
 
   _lastEmptyIndex() {
     for (let i = (this.size - 1); i > 0; i--) {
-      if (this.squares[i] === undefined) { console.log("lastEmptyIndex", i); return i }
+      if (this.squares[i] === undefined) { return i }
     }
   }
 

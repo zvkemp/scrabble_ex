@@ -80,16 +80,11 @@ defmodule ScrabbleExWeb.GameChannelTest do
   end
 
   test "both members belong to the game", %{zach: zach, kate: kate} do
-    z_ref = zach.join_ref
-    k_ref = kate.join_ref
     game = game_state()
-    z_rack = game.racks["zach"]
-    k_rack = game.racks["kate"]
 
     # pushed to both clients on each player join
-    assert_player_state_push(z_ref, z_rack, nil)
-    assert_player_state_push(z_ref, z_rack, nil)
-    assert_player_state_push(k_ref, k_rack, nil)
+    assert_intercepted_broadcast([zach], game)
+    assert_intercepted_broadcast([zach, kate], game)
 
     assert {:ok, rt} = Jason.decode(Jason.encode!(game))
 
@@ -97,34 +92,17 @@ defmodule ScrabbleExWeb.GameChannelTest do
     assert Map.has_key?(rt, "bag") == false
     assert Map.has_key?(rt, "racks") == false
 
-    game = game_state()
-
-    assert %Game{current_player: nil} = game_state()
+    assert %Game{current_player: nil} = game
 
     ref = push(zach, "start")
     assert_reply(ref, :ok, %{})
 
-    assert_player_state_push(z_ref, z_rack, "zach")
-    assert_player_state_push(k_ref, k_rack, "zach")
-  end
-
-  def assert_intercepted_broadcast(sockets, game) do
-    current_player = game.current_player
-
-    for socket <- sockets do
-      rack = game.racks[socket.assigns.player]
-      join_ref = socket.join_ref
-
-      assert_push("player-state", %{
-        rack: ^rack,
-        game: %{current_player: ^current_player},
-        join_ref: ^join_ref
-      })
-    end
+    assert %{current_player: "zach"} = game = game_state()
+    assert_intercepted_broadcast([zach, kate], game)
   end
 
   @tag :focus
-  test "full game", %{zach: %{join_ref: z_ref} = zach, kate: %{join_ref: k_ref} = kate} do
+  test "full game", %{zach: zach, kate: kate} do
     game = game_state()
     # pushed to both clients on join
     assert_intercepted_broadcast([zach], game)
@@ -142,6 +120,9 @@ defmodule ScrabbleExWeb.GameChannelTest do
 
     ref = push(zach, "pass")
     assert_reply(ref, :error, %{message: "you shall not pass"})
+
+    ref = push(kate, "submit_payload", %{"112" => "S", "113" => "0"})
+    assert_reply(ref, :error, %{message: "it is not kate's turn"})
 
     ref =
       push(zach, "submit_payload", %{
@@ -164,6 +145,9 @@ defmodule ScrabbleExWeb.GameChannelTest do
 
     assert %{"zach" => [[["JOKES", 48]]]} = scores
 
+    ref = push(zach, "swap", %{"0" => "V"})
+    assert_reply(ref, :error, %{message: "it is not zach's turn"})
+
     ref = push(kate, "proposed", %{})
     assert_reply(ref, :error, %{message: "not long enough"})
 
@@ -179,7 +163,7 @@ defmodule ScrabbleExWeb.GameChannelTest do
     }
 
     ref = push(kate, "proposed", payload)
-    assert_reply(ref, :ok, %{message: "JOKERS,34"})
+    assert_reply(ref, :ok, %{message: "JOKERS: 34"})
 
     ref = push(kate, "submit_payload", payload)
     assert_reply(ref, :ok, %{})
@@ -223,8 +207,31 @@ defmodule ScrabbleExWeb.GameChannelTest do
     ref = push(kate, "pass")
     assert_reply(ref, :ok, %{})
 
-    assert %{current_player: "zach"} = game = game_state()
+    assert %{current_player: "zach", pass_count: 1} = game = game_state()
     assert_intercepted_broadcast([zach, kate], game)
+
+    ref = push(zach, "swap", %{"0" => "V"})
+    assert_reply(ref, :error, %{message: "not enough tiles left in bag"})
+
+    assert_reply(push(zach, "pass", %{}), :ok, %{})
+    assert %{current_player: "kate", game_over: false, pass_count: 2} = game = game_state()
+    assert_intercepted_broadcast([zach, kate], game)
+
+    ref = push(zach, "pass", %{})
+    assert_reply(ref, :error, %{message: "it is not zach's turn"})
+
+    assert_reply(push(kate, "pass", %{}), :ok, %{})
+    assert %{current_player: "zach", game_over: false, pass_count: 3} = game = game_state()
+    assert_intercepted_broadcast([zach, kate], game)
+
+    assert_reply(push(zach, "pass", %{}), :ok, %{})
+    assert %{current_player: "kate", game_over: true, pass_count: 4} = game = game_state()
+    assert_intercepted_broadcast([zach, kate], game)
+
+    assert %{
+             "zach" => [[["remaining tiles", -13]] | _],
+             "kate" => [[["remaining tiles", -26]] | _]
+           } = game.scores
   end
 
   test "error handling", %{zach: zach} do
@@ -315,7 +322,6 @@ defmodule ScrabbleExWeb.GameChannelTest do
 
     game = game_state()
 
-    z_rack = game.racks["zach"]
     assert(game.current_player == "kate")
     assert(game.referee.tries_remaining == 3)
 
@@ -323,15 +329,18 @@ defmodule ScrabbleExWeb.GameChannelTest do
     assert_broadcast("info", %{message: "zach lost a turn due to illegal maneuvers."})
   end
 
-  def flush_messages(timeout \\ 100) do
-    receive do
-      %Phoenix.Socket.Message{} ->
-        flush_messages()
+  defp assert_intercepted_broadcast(sockets, game) do
+    current_player = game.current_player
 
-      %Phoenix.Socket.Broadcast{} ->
-        flush_messages()
-    after
-      timeout -> nil
+    for socket <- sockets do
+      rack = game.racks[socket.assigns.player]
+      join_ref = socket.join_ref
+
+      assert_push("player-state", %{
+        rack: ^rack,
+        game: %{current_player: ^current_player},
+        join_ref: ^join_ref
+      })
     end
   end
 end
