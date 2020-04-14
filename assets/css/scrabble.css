@@ -65,6 +65,11 @@
   grid-template-rows: repeat(21, 30px);
 }
 
+#board-container.mini {
+  grid-template-columns: repeat(11, 30px); 
+  grid-template-rows: repeat(11, 30px);
+}
+
 #board-container.current {
   border-color: green;
 }

@@ -19,10 +19,6 @@ defmodule ScrabbleEx.Board do
     defp map_term(c) when is_binary(c), do: %{character: c}
   end
 
-  def mini_str do
-    # FIXME
-  end
-
   def standard_str do
     "3w .  .  2l .  .  .  3w .  .  .  2l .  .  3w " <>
       ".  2w .  .  .  3l .  .  .  3l .  .  .  2w .  " <>
@@ -65,12 +61,30 @@ defmodule ScrabbleEx.Board do
       "4w .  .  2l .  .  .  3w .  .  2l .  .  3w .  .  .  2l .  .  4w "
   end
 
-  def standard do
+  def mini_str do
+    "3w .  .  3l .  3w .  3l .  .  3w "<>
+    ".  2w .  .  2l .  2l .  .  2w .  " <>
+    ".  .  2w .  .  2l .  .  2w .  .  " <>
+    "3l .  .  3l .  .  .  3l .  .  3l " <>
+    ".  2l .  .  2l .  2l .  .  2l .  " <>
+    "3w .  2l .  .  2w .  .  2l .  3w " <>
+    ".  2l .  .  2l .  2l .  .  2l .  " <>
+    "3l .  .  3l .  .  .  3l .  .  3l " <>
+    ".  .  2w .  .  2l .  .  2w .  .  " <>
+    ".  2w .  .  2l .  2l .  .  2w .  " <>
+    "3w .  .  3l .  3w .  3l .  .  3w"
+  end
+
+  defp parsed_standard do
     parse(standard_str())
   end
 
-  def parsed_super do
+  defp parsed_super do
     parse(super_str())
+  end
+
+  defp parsed_mini do
+    parse(mini_str())
   end
 
   def parse(str) do
@@ -95,15 +109,23 @@ defmodule ScrabbleEx.Board do
   defp parse_fragment(f), do: f
 
   def new() do
-    new(15, standard())
+    new(:standard)
+  end
+
+  def new(:standard) do
+    new(15, parsed_standard())
+  end
+
+  def new(:super) do
+    new(21, parsed_super())
+  end
+
+  def new(:mini) do
+    new(11, parsed_mini())
   end
 
   def new(size, map) do
     %__MODULE__{size: size, state: map}
-  end
-
-  def super_new() do
-    new(21, parsed_super())
   end
 
   # FIXME: this doesn't validate

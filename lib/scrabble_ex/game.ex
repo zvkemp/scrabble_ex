@@ -40,6 +40,7 @@ defmodule ScrabbleEx.Game do
     :game_over,
     :pass_count,
     :referee,
+    :board_type,
     opts: []
   ]
 
@@ -55,10 +56,21 @@ defmodule ScrabbleEx.Game do
           swap_allowed: Game.swap_allowed?(struct),
           pass_allowed: Game.pass_allowed?(struct),
           bag_count: Enum.count(struct.bag),
-          pass_count: struct.pass_count
+          pass_count: struct.pass_count,
+          size: struct.board.size,
+          board_type: Game.board_type(struct),
         },
         opts
       )
+    end
+  end
+
+  # FIXME: remove once all games have been backfilled
+  def board_type(game) do
+    game.board_type || case game.board.size do
+      11 -> :mini
+      15 -> :standard
+      21 -> :super
     end
   end
 
@@ -67,7 +79,14 @@ defmodule ScrabbleEx.Game do
   def new("super:" <> _ = name, opts) do
     _new(
       name,
-      Keyword.merge(opts, board: Board.super_new(), bag: new_super_bag())
+      Keyword.merge(opts, board_type: :super)
+    )
+  end
+
+  def new("mini:" <> _ = name, opts) do
+    _new(
+      name,
+      Keyword.merge(opts, board_type: :mini)
     )
   end
 
@@ -80,18 +99,20 @@ defmodule ScrabbleEx.Game do
     import Keyword, only: [fetch!: 2, get: 2, get: 3, get_lazy: 3]
 
     players = get(opts, :players, [])
+    board_type = get(opts, :board_type, :standard)
 
     %__MODULE__{
       players: players,
       current_player: nil,
-      board: get_lazy(opts, :board, &Board.new/0),
+      board: get_lazy(opts, :board, fn -> Board.new(board_type) end),
       log: [],
-      bag: get_lazy(opts, :bag, &new_bag/0),
+      bag: get_lazy(opts, :bag, fn -> new_bag(board_type) end),
       scores: players |> map(&{&1, []}) |> into(%{}),
       racks: players |> map(&{&1, []}) |> into(%{}),
       name: name,
       game_over: false,
       pass_count: 0,
+      board_type: board_type,
       referee: struct(ScrabbleEx.Referee),
       opts: [start_at: get(opts, :start_at, :rand)]
     }
@@ -158,25 +179,36 @@ defmodule ScrabbleEx.Game do
     "BLANK" => 4
   }
 
+  # FIXME: Balance of letters needs work.
+  # should be around 54 to fill up 45% of the board;
+  # maybe fewer odd letters and more blanks
   @mini_counts %{
     "A" => 3,
     "B" => 1,
     "C" => 1,
-    "D" => 1,
+    "D" => 2,
     "E" => 5,
+    "F" => 1,
+    "G" => 2,
     "H" => 1,
-    "I" => 2,
+    "I" => 3,
+    "J" => 1,
     "K" => 1,
-    "L" => 1,
+    "L" => 2,
     "M" => 1,
-    "N" => 2,
-    "O" => 2,
-    "R" => 2,
-    "S" => 2,
-    "T" => 3,
-    "U" => 1,
-    "V" => 3,
+    "N" => 3,
+    "O" => 3,
+    "P" => 1,
+    "Q" => 1,
+    "R" => 3,
+    "S" => 3,
+    "T" => 4,
+    "U" => 2,
+    "V" => 1,
+    "W" => 1,
     "X" => 1,
+    "Y" => 1,
+    "Z" => 1,
     "BLANK" => 2
   }
 
@@ -269,15 +301,15 @@ defmodule ScrabbleEx.Game do
     put(game, :current_player, Enum.at(game.players, index))
   end
 
-  defp new_bag do
-    new_bag(@char_counts)
+  defp new_bag(board_type \\ :standard) when is_atom(board_type) do
+    new_bag(counts(board_type))
   end
 
   defp new_super_bag do
     new_bag(@super_counts)
   end
 
-  defp new_bag(counts) do
+  defp new_bag(counts) when is_map(counts) do
     counts
     |> Enum.flat_map(fn {c, n} ->
       Stream.cycle([c]) |> Enum.take(n)

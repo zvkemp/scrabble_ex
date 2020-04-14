@@ -123,6 +123,12 @@ class Scrabble {
       this.current_player = game.current_player // FIXME: where does this logic belong?
     }
 
+
+    this.element.classed(game.board_type, true);
+    this.flash_container.classed(game.board_type, true);
+
+    if (game.size) { this.size = game.size; }
+
     if (game.board) {
       this.proposed = {};
       this.data = game.board;
@@ -424,12 +430,6 @@ class Scrabble {
     let data = this.data;
 
     container.classed('current', this.current_player == this.player);
-
-    if (data.length === 441) {
-      this.size = 21; // FIXME: better way to set this once
-      container.classed('super', true);
-      this.flash_container.classed('super', true);
-    }
 
     let squares = container.selectAll('div.board-square').data(data);
     let enterJoin = squares
