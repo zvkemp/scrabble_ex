@@ -71,8 +71,10 @@ defmodule ScrabbleExWeb.PageController do
       board_type: String.to_atom(board)
     ]
 
+    IO.inspect(params |> get("game"))
+
     opts =
-      if params |> get("game") |> get("scramble"),
+      if params |> get("game") |> get("scramble") == "true",
         do: Keyword.put(opts, :scramble, true),
         else: opts
 
