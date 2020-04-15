@@ -21,15 +21,20 @@ defmodule ScrabbleEx.GameServer do
     start(id, opts)
   end
 
-  def start(id, opts) do
-    GenServer.start(__MODULE__, id, opts)
+  def start({id, game_opts}, opts \\ []) do
+    opts = Keyword.put_new(opts, :name, {:global, "game:" <> id})
+    GenServer.start(__MODULE__, {id, game_opts}, opts)
   end
 
   def set_rack(name, player, rack) do
     GenServer.call({:global, "game:#{name}"}, {:set_rack, player, rack})
   end
 
-  def init(id) do
+  def init(id) when is_binary(id) do
+    init({id, []})
+  end
+
+  def init({id, opts}) do
     game = Persistence.get_game_by_name(id)
 
     case game do
@@ -37,13 +42,13 @@ defmodule ScrabbleEx.GameServer do
         {:ok, game} =
           Persistence.create_game(%{
             name: id,
-            state: Game.new(id, players: [])
+            state: Game.new(id, opts)
           })
 
         {:ok, %Game{game.state | pkid: game.id}}
 
-      %Persistence.Game{state: state} ->
-        {:ok, state}
+      %Persistence.Game{state: state, id: id} ->
+        {:ok, %Game{state | pkid: id}}
     end
   end
 

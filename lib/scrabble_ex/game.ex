@@ -100,11 +100,14 @@ defmodule ScrabbleEx.Game do
 
     players = get(opts, :players, [])
     board_type = get(opts, :board_type, :standard)
+    board = get_lazy(opts, :board, fn -> Board.new(board_type) end)
+
+    board = if Keyword.get(opts, :scramble, false), do: Board.scramble(board), else: board
 
     %__MODULE__{
       players: players,
       current_player: nil,
-      board: get_lazy(opts, :board, fn -> Board.new(board_type) end),
+      board: board,
       log: [],
       bag: get_lazy(opts, :bag, fn -> new_bag(board_type) end),
       scores: players |> map(&{&1, []}) |> into(%{}),

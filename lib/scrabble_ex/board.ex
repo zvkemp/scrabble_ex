@@ -128,6 +128,15 @@ defmodule ScrabbleEx.Board do
     %__MODULE__{size: size, state: map}
   end
 
+  def scramble(board) do
+    values = board.state |> Map.values
+    keys = board.state |> Map.keys
+
+    %{board|
+        state: Enum.zip([Enum.shuffle(keys), values]) |> Enum.into(%{})
+    }
+  end
+
   # FIXME: this doesn't validate
   def merge_and_validate(board, letter_map) do
     new_state = Map.merge(board.state, letter_map)

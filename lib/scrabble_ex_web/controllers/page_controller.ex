@@ -1,12 +1,13 @@
 defmodule ScrabbleExWeb.PageController do
   use ScrabbleExWeb, :controller
   import ScrabbleExWeb.Endpoint, only: [signing_salt: 0]
+  import Map, only: [get: 2]
 
   def index(conn, _params) do
     render(conn, "index.html")
   end
 
-  def show(conn, %{"id" => game_id}) do
+  def show(conn, %{"id" => game_id} = params) do
     user = conn.assigns.current_user
     name = user.username
     token = Phoenix.Token.sign(ScrabbleExWeb.Endpoint, signing_salt(), user.id)
@@ -54,16 +55,24 @@ defmodule ScrabbleExWeb.PageController do
       case board do
         "standard" -> :ok
         "super" -> :ok
+        "mini" -> :ok
         _ -> :error
       end
 
     name =
       case name do
-        "" -> :crypto.strong_rand_bytes(16) |> Base.encode64()
+        "" -> Stream.repeatedly(&Faker.Nato.letter_code_word/0) |> Enum.take(5) |> Enum.join("-")
         _ -> name
       end
 
-    name = "#{board}:#{Inflex.parameterize_to_ascii(name)}"
+    name = Inflex.parameterize_to_ascii(name)
+    opts = [
+      board_type: String.to_atom(board)
+    ]
+
+    opts = if params |> get("game") |> get("scramble"), do: Keyword.put(opts, :scramble, true), else: opts
+
+    ScrabbleEx.GameServer.start({name, opts})
 
     conn
     |> redirect(to: Routes.page_path(conn, :show, name))

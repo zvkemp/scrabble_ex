@@ -12,13 +12,23 @@
   <%= form_for @conn, Routes.page_path(@conn, :create), [as: :game], fn f -> %>
     <%= text_input f, :name, placeholder: "name your game (optional)" %>
     <label for="game_board_standard">
-      <%= radio_button(f, :board, "standard") %>
+      <%= radio_button(f, :board, "standard", checked: true) %>
       Standard Board
     </label>
 
     <label for="game_board_super">
       <%= radio_button(f, :board, "super") %>
       Super Board
+    </label>
+
+    <label for="game_board_mini">
+      <%= radio_button(f, :board, "mini") %>
+      Mini Board
+    </label>
+
+    <label for="scramble">
+      <%= checkbox(f, :scramble) %>
+      Scrambled Board
     </label>
     <%= submit "go!", class: "btn right secondary-color" %>
   <% end %>

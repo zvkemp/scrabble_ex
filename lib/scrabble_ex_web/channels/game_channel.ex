@@ -96,8 +96,8 @@ defmodule ScrabbleExWeb.GameChannel do
     )
   end
 
-  defp find_or_start_game(id) do
-    case ScrabbleEx.GameServer.start(id, name: {:global, "game:#{id}"}) do
+  defp find_or_start_game(id, opts \\ []) do
+    case ScrabbleEx.GameServer.start({id, opts}, name: {:global, "game:#{id}"}) do
       {:ok, pid} -> {:ok, pid}
       {:error, {:already_started, pid}} -> {:ok, pid}
     end
