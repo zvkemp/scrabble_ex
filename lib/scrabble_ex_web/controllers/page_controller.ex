@@ -65,7 +65,7 @@ defmodule ScrabbleExWeb.PageController do
         _ -> name
       end
 
-    name = Inflex.parameterize_to_ascii(name)
+    name = Inflex.parameterize(name)
     opts = [
       board_type: String.to_atom(board)
     ]
