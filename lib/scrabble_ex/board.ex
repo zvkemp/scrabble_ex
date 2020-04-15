@@ -62,17 +62,17 @@ defmodule ScrabbleEx.Board do
   end
 
   def mini_str do
-    "3w .  .  3l .  3w .  3l .  .  3w "<>
-    ".  2w .  .  2l .  2l .  .  2w .  " <>
-    ".  .  2w .  .  2l .  .  2w .  .  " <>
-    "3l .  .  3l .  .  .  3l .  .  3l " <>
-    ".  2l .  .  2l .  2l .  .  2l .  " <>
-    "3w .  2l .  .  2w .  .  2l .  3w " <>
-    ".  2l .  .  2l .  2l .  .  2l .  " <>
-    "3l .  .  3l .  .  .  3l .  .  3l " <>
-    ".  .  2w .  .  2l .  .  2w .  .  " <>
-    ".  2w .  .  2l .  2l .  .  2w .  " <>
-    "3w .  .  3l .  3w .  3l .  .  3w"
+    "3w .  .  3l .  3w .  3l .  .  3w " <>
+      ".  2w .  .  2l .  2l .  .  2w .  " <>
+      ".  .  2w .  .  2l .  .  2w .  .  " <>
+      "3l .  .  3l .  .  .  3l .  .  3l " <>
+      ".  2l .  .  2l .  2l .  .  2l .  " <>
+      "3w .  2l .  .  2w .  .  2l .  3w " <>
+      ".  2l .  .  2l .  2l .  .  2l .  " <>
+      "3l .  .  3l .  .  .  3l .  .  3l " <>
+      ".  .  2w .  .  2l .  .  2w .  .  " <>
+      ".  2w .  .  2l .  2l .  .  2w .  " <>
+      "3w .  .  3l .  3w .  3l .  .  3w"
   end
 
   defp parsed_standard do
@@ -129,12 +129,10 @@ defmodule ScrabbleEx.Board do
   end
 
   def scramble(board) do
-    values = board.state |> Map.values
-    keys = board.state |> Map.keys
+    values = board.state |> Map.values()
+    keys = board.state |> Map.keys()
 
-    %{board|
-        state: Enum.zip([Enum.shuffle(keys), values]) |> Enum.into(%{})
-    }
+    %{board | state: Enum.zip([Enum.shuffle(keys), values]) |> Enum.into(%{})}
   end
 
   # FIXME: this doesn't validate

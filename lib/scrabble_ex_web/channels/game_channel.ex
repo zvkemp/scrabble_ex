@@ -39,8 +39,8 @@ defmodule ScrabbleExWeb.GameChannel do
     game = call(socket, :state)
     broadcast!(socket, "player-state", %{game: game})
     # FIXME: how should this be used?
-    Presence.track(socket, socket.assigns.user_id, %{})
-    {:noreply, socket}
+    {:ok, presence_ref} = Presence.track(socket, socket.assigns.user_id, socket.assigns)
+    {:noreply, assign(socket, :presence_ref, presence_ref)}
   end
 
   def handle_in("proposed", payload, socket) do
@@ -170,7 +170,7 @@ defmodule ScrabbleExWeb.GameChannel do
     {:reply, {:error, %{message: msg}}, socket}
   end
 
-  intercept ["player-state"]
+  intercept ["player-state", "presence_diff"]
 
   def handle_out("player-state", %Game{} = game, socket) do
     handle_out("player-state", %{game: game}, socket)
@@ -178,6 +178,23 @@ defmodule ScrabbleExWeb.GameChannel do
 
   def handle_out("player-state", %{game: game}, socket) do
     push(socket, "player-state", player_payload(socket, game))
+    {:noreply, socket}
+  end
+
+  def handle_out("presence_diff", payload, socket) do
+    # It's less helpful to have the diff than a current list of
+    # online clients sent at the time the diff was generated.
+    presence = Presence.list(socket)
+               |> Map.values
+               |> Enum.reduce([], fn
+                 %{metas: [%{player: username}|_]}, acc -> [username|acc]
+                 x, acc ->
+                   IO.inspect({:x, x})
+                   acc
+               end)
+               |> Enum.uniq
+
+    push(socket, "presence", %{online: presence} |> IO.inspect)
     {:noreply, socket}
   end
 end

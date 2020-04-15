@@ -178,12 +178,35 @@
   border-right: 3px solid green;
 }
 
+#score-container table {
+  table-layout: fixed;
+  width: 100%;
+}
+
 th.current-player {
   color: green;
 }
 
 th.is-player {
-  border: 1px solid gray;
+  text-decoration: underline dotted;
+}
+
+th.offline {
+  color: gray;
+  font-style: italic;
+  font-weight: normal;
+}
+
+th.offline::after {
+  font-size: 7pt;
+  color: white;
+  background-color: lightgray;
+  border-radius: 4px;
+  content: "OFFLINE";
+  padding: 4px;
+  margin-left: 4px;
+  font-style: normal;
+  font-weight: bold;
 }
 
 #swap-button, #pass-button, .submit-button {
@@ -270,4 +293,20 @@ tr.your-turn {
 .letter-Q::after,
 .letter-Z::after {
   content: "10"
+}
+
+.score-word {
+  font-size: 10pt;
+  margin-left: 8pt;
+}
+
+.score-bingo {
+  border: 1px solid gray;
+  border-radius: 4px;
+  background-color: DarkCyan;
+  color: white;
+  font-weight: bold;
+  font-size: 9pt;
+  padding: 2px;
+  margin-left: 8pt;
 }

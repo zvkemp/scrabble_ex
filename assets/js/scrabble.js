@@ -30,7 +30,8 @@ class Scrabble {
     this._current_player = undefined;
     this.proposed = {};
     this.scores = {};
-    this.players = [];
+    this._players = [];
+    this.playersOnline = [];
     this.first_load = true;
 
     this._rack = new Rack(this, "#rack-container", []);
@@ -38,6 +39,21 @@ class Scrabble {
     this.joinGameAs(this.token, this.name);
 
     Notification.requestPermission();
+  }
+
+  get players() {
+    return this._players;
+  }
+
+  set players(newPlayers) {
+    this._players = newPlayers;
+
+    if (newPlayers.indexOf(this.player) >= 0) { // this should always be tru
+      while (this._players.indexOf(this.player) > 0) {
+        // always list the user's player first
+        this._players.unshift(this._players.pop())
+      }
+    }
   }
 
   joinGameAs(token, name) {
@@ -69,6 +85,15 @@ class Scrabble {
 
     this.channel.on("info", payload => {
       this.flash("info", payload);
+    });
+
+    this.channel.on("log", payload => {
+      console.log(payload)
+    });
+
+    this.channel.on("presence", payload => {
+      this.playersOnline = payload.online;
+      this.drawScores();
     });
 
     this.channel.on("rack", payload => {
@@ -474,6 +499,14 @@ class Scrabble {
     button.exit().remove();
   }
 
+  playerIsOffline(player) {
+    return !this.playerIsOnline(player);
+  }
+
+  playerIsOnline(player) {
+    return this.playersOnline.indexOf(player) >= 0;
+  }
+
   drawScores() {
     // FIXME: this is a mess
     let scoreCount = 0;
@@ -502,7 +535,8 @@ class Scrabble {
     thSelection.html(function (player) {
       return `${player} (${component.totalScore(player)})`
     }).classed('current-player', (d) => this.current_player == d)
-    .classed('is-player', (d) => this.player == d);
+    .classed('is-player', (d) => this.player == d)
+    .classed('offline', (d) => this.playerIsOffline(d));
 
     let rowSelection = table.select('tbody').selectAll('tr').data(data);
     let row_entry = rowSelection.enter().append('tr')
@@ -519,7 +553,19 @@ class Scrabble {
           return acc + score[1]
         }, 0);
 
-        return `<b>${total}</b> (${localScores.join(' ')})`
+        let scoreString = localScores.map(([word, points]) => {
+          if (word === "*") {
+            return `<span class='score-bingo'>BINGO: ${points}</span>`
+          }
+
+          if (localScores.length > 1) {
+            return `<span class='score-word'>${word}: ${points}</span>`
+          } else {
+            return `<span class='score-word'>${word}</span>`
+          }
+        }).join("");
+
+        return `<b>${total}</b>:${scoreString}`
       });
     })
   }

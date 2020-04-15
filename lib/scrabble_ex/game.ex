@@ -58,7 +58,7 @@ defmodule ScrabbleEx.Game do
           bag_count: Enum.count(struct.bag),
           pass_count: struct.pass_count,
           size: struct.board.size,
-          board_type: Game.board_type(struct),
+          board_type: Game.board_type(struct)
         },
         opts
       )
@@ -67,11 +67,12 @@ defmodule ScrabbleEx.Game do
 
   # FIXME: remove once all games have been backfilled
   def board_type(game) do
-    game.board_type || case game.board.size do
-      11 -> :mini
-      15 -> :standard
-      21 -> :super
-    end
+    game.board_type ||
+      case game.board.size do
+        11 -> :mini
+        15 -> :standard
+        21 -> :super
+      end
   end
 
   def new(name, opts \\ [])

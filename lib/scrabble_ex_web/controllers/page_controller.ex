@@ -66,11 +66,15 @@ defmodule ScrabbleExWeb.PageController do
       end
 
     name = Inflex.parameterize(name)
+
     opts = [
       board_type: String.to_atom(board)
     ]
 
-    opts = if params |> get("game") |> get("scramble"), do: Keyword.put(opts, :scramble, true), else: opts
+    opts =
+      if params |> get("game") |> get("scramble"),
+        do: Keyword.put(opts, :scramble, true),
+        else: opts
 
     ScrabbleEx.GameServer.start({name, opts})
 
