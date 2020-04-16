@@ -97,10 +97,7 @@ defmodule ScrabbleExWeb.GameChannel do
   end
 
   defp find_or_start_game(id, opts \\ []) do
-    case ScrabbleEx.GameServer.start({id, opts}, name: {:global, "game:#{id}"}) do
-      {:ok, pid} -> {:ok, pid}
-      {:error, {:already_started, pid}} -> {:ok, pid}
-    end
+    ScrabbleEx.GameServer.find_or_start_game(id, opts)
   end
 
   defp find_game_pid(socket) do
@@ -188,13 +185,11 @@ defmodule ScrabbleExWeb.GameChannel do
                |> Map.values
                |> Enum.reduce([], fn
                  %{metas: [%{player: username}|_]}, acc -> [username|acc]
-                 x, acc ->
-                   IO.inspect({:x, x})
-                   acc
+                 x, acc -> acc
                end)
                |> Enum.uniq
 
-    push(socket, "presence", %{online: presence} |> IO.inspect)
+    push(socket, "presence", %{online: presence})
     {:noreply, socket}
   end
 end

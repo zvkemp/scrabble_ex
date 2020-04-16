@@ -4,6 +4,17 @@ defmodule ScrabbleEx.GameServer do
   use GenServer
   alias ScrabbleEx.Game
   alias ScrabbleEx.Persistence
+  require Logger
+
+  # After 30 minutes, this server will shut down.
+  @game_timeout 1_800_000
+
+  def find_or_start_game(id, opts \\ []) do
+    case start({id, opts}, name: {:global, "game:#{id}"}) do
+      {:ok, pid} -> {:ok, pid}
+      {:error, {:already_started, pid}} -> {:ok, pid}
+    end
+  end
 
   def start_link([name: {:global, "game:" <> id}] = opts) do
     GenServer.start_link(__MODULE__, id, opts)
@@ -45,20 +56,20 @@ defmodule ScrabbleEx.GameServer do
             state: Game.new(id, opts)
           })
 
-        {:ok, %Game{game.state | pkid: game.id}}
+        {:ok, %Game{game.state | pkid: game.id}, @game_timeout}
 
       %Persistence.Game{state: state, id: id} ->
-        {:ok, %Game{state | pkid: id}}
+        {:ok, %Game{state | pkid: id}, @game_timeout} # FIXME: game timeout should be short for ended games; only needs to live long enough to serve state to the websocket.
     end
   end
 
   # for test
   def handle_call({:set_state, game}, _from, _game) do
-    {:reply, :ok, game}
+    {:reply, :ok, game, @game_timeout}
   end
 
   def handle_call(:state, _from, game) do
-    {:reply, game, game}
+    {:reply, game, game, @game_timeout}
   end
 
   def handle_call({:set_rack, player, rack}, _from, game) do
@@ -101,20 +112,20 @@ defmodule ScrabbleEx.GameServer do
     case apply(Game, name, [game | args]) do
       {:ok, %Game{} = new_game} ->
         ok_callback.(new_game)
-        {:reply, {:ok, new_game}, save_state(new_game)}
+        {:reply, {:ok, new_game}, save_state(new_game), @game_timeout}
 
       {:ok, :rejoin} ->
-        {:reply, {:ok, :rejoin}, game}
+        {:reply, {:ok, :rejoin}, game, @game_timeout}
 
       {:error, _msg} = e ->
-        {:reply, e, game}
+        {:reply, e, game, @game_timeout}
 
       # error plus new state
       {:error, msg, new_game} ->
-        {:reply, {:error, msg}, save_state(new_game)}
+        {:reply, {:error, msg}, save_state(new_game), @game_timeout}
 
       {:error, :next_player, msg, new_game} ->
-        {:reply, {:error, :next_player, msg, new_game}, save_state(new_game)}
+        {:reply, {:error, :next_player, msg, new_game}, save_state(new_game), @game_timeout}
     end
   end
 
@@ -126,5 +137,13 @@ defmodule ScrabbleEx.GameServer do
 
   defp add_player_assoc(%Game{pkid: pkid}, user) do
     Persistence.add_player_to_game(pkid, user.id)
+  end
+
+  def handle_info(:timeout, state) do
+    {:stop, {:shutdown, :timeout}, state}
+  end
+
+  def terminate(reason, state) do
+    Logger.warn("[timeout] GenServer for #{state.name} is terminating due to inactivity.")
   end
 end

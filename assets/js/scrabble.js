@@ -65,6 +65,7 @@ class Scrabble {
 
     // FIXME: remove after deploy
     this.channel.on("state", payload => {
+
       this.handleGameState(payload)
     });
 
