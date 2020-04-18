@@ -24,6 +24,8 @@ defmodule ScrabbleExWeb do
       import Plug.Conn
       import ScrabbleExWeb.Gettext
       alias ScrabbleExWeb.Router.Helpers, as: Routes
+
+      import Phoenix.LiveView.Controller
     end
   end
 
@@ -44,6 +46,7 @@ defmodule ScrabbleExWeb do
       alias ScrabbleExWeb.Router.Helpers, as: Routes
 
       import ScrabbleEx.Players.Auth, only: [signed_in?: 1]
+      import Phoenix.LiveView.Helpers
     end
   end
 
@@ -52,6 +55,7 @@ defmodule ScrabbleExWeb do
       use Phoenix.Router
       import Plug.Conn
       import Phoenix.Controller
+      import Phoenix.LiveView.Router
     end
   end
 
