@@ -159,6 +159,10 @@
   color: indianred;
 }
 
+.board-square.last-turn {
+  background-color: #F5B041;
+}
+
 .board-square.cursor {
   border: 2px solid red;
   border-bottom: 3px solid green;

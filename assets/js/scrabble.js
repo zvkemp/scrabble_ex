@@ -158,6 +158,7 @@ class Scrabble {
     if (game.board) {
       this.proposed = {};
       this.data = game.board;
+      this.last_turn_indices = game.last_turn_indices || [];
     }
 
     this.scores = game.scores;
@@ -471,6 +472,7 @@ class Scrabble {
     currentSquares.classed("tile", d => d.character);
     currentSquares.classed("tile-blank", d => d.character && d.character[0] == ":");
     currentSquares.classed("tile-proposed", (d, i) => this.proposed[i]);
+    currentSquares.classed("last-turn", (_d, i) => this.last_turn_indices.indexOf(i) >= 0);
     currentSquares.filter((d) => d.has_cursor).classed("cursor", true);
     currentSquares.html((d, i) => {
       if (d.character && d.character[0] == ":") {

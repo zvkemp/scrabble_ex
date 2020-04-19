@@ -181,13 +181,14 @@ defmodule ScrabbleExWeb.GameChannel do
   def handle_out("presence_diff", payload, socket) do
     # It's less helpful to have the diff than a current list of
     # online clients sent at the time the diff was generated.
-    presence = Presence.list(socket)
-               |> Map.values
-               |> Enum.reduce([], fn
-                 %{metas: [%{player: username}|_]}, acc -> [username|acc]
-                 x, acc -> acc
-               end)
-               |> Enum.uniq
+    presence =
+      Presence.list(socket)
+      |> Map.values()
+      |> Enum.reduce([], fn
+        %{metas: [%{player: username} | _]}, acc -> [username | acc]
+        x, acc -> acc
+      end)
+      |> Enum.uniq()
 
     push(socket, "presence", %{online: presence})
     {:noreply, socket}

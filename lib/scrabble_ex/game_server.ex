@@ -59,7 +59,8 @@ defmodule ScrabbleEx.GameServer do
         {:ok, %Game{game.state | pkid: game.id}, @game_timeout}
 
       %Persistence.Game{state: state, id: id} ->
-        {:ok, %Game{state | pkid: id}, @game_timeout} # FIXME: game timeout should be short for ended games; only needs to live long enough to serve state to the websocket.
+        # FIXME: game timeout should be short for ended games; only needs to live long enough to serve state to the websocket.
+        {:ok, %Game{state | pkid: id}, @game_timeout}
     end
   end
 

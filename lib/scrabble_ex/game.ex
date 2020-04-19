@@ -58,7 +58,8 @@ defmodule ScrabbleEx.Game do
           bag_count: Enum.count(struct.bag),
           pass_count: struct.pass_count,
           size: struct.board.size,
-          board_type: Game.board_type(struct)
+          board_type: Game.board_type(struct),
+          last_turn_indices: Game.last_turn_indices(struct)
         },
         opts
       )
@@ -236,6 +237,13 @@ defmodule ScrabbleEx.Game do
     remaining_letters(game, racks[player])
   end
 
+  def last_turn_indices(game) do
+    case Enum.at(game.log, 0) do
+      [player, {:play, map}] -> Map.keys(map)
+      _ -> []
+    end
+  end
+
   def remaining_letters(%{racks: racks, bag: bag}, omit) when is_list(omit) do
     (((Map.values(racks) |> List.flatten()) ++ bag) -- omit)
     |> Enum.sort_by(fn
@@ -386,7 +394,7 @@ defmodule ScrabbleEx.Game do
       {:ok,
        game
        |> merge(%{
-         log: [[player, letter_map] | log],
+         log: [[player, {:play, letter_map}] | log],
          board: new_board,
          scores: new_scores,
          racks: new_racks,
@@ -438,9 +446,12 @@ defmodule ScrabbleEx.Game do
   def pass(game, player) do
     with :ok <- validate_current_player(game, player),
          true <- pass_allowed?(game) do
+      new_log = [[player, :pass] | game.log]
+
       {:ok,
        game
-       |> Map.update(:pass_count, 1, &(&1 + 1))
+       |> update(:pass_count, 1, &(&1 + 1))
+       |> put(:log, new_log)
        |> next_player
        |> check_game_over}
     else
@@ -472,10 +483,11 @@ defmodule ScrabbleEx.Game do
 
       new_bag = (drop(game.bag, count) ++ swapped) |> shuffle()
       new_racks = put(game.racks, player, new_rack)
+      new_log = [[player, :swap] | game.log]
 
       new_game =
         game
-        |> merge(%{bag: new_bag, racks: new_racks})
+        |> merge(%{bag: new_bag, racks: new_racks, log: new_log})
         |> next_player
 
       {:ok, new_game}
