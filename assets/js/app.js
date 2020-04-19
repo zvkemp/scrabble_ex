@@ -13,6 +13,7 @@ import "phoenix_html"
 import socket from "./socket"
 import Scrabble from "./scrabble"
 import LiveSocket from "phoenix_live_view"
+import {Socket} from "phoenix"
 
 // Import local files
 //
@@ -22,8 +23,10 @@ if (document.querySelector('meta[name="id-token"]')) {
   const scrabble = new Scrabble(socket);
 }
 
+
 let csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content");
 let liveSocket = new LiveSocket("/live", Socket, {params: {_csrf_token: csrfToken}});
+
 
 // connect if there are any LiveViews on the page
 liveSocket.connect()

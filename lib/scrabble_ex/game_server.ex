@@ -130,11 +130,14 @@ defmodule ScrabbleEx.GameServer do
   defp save_state(%Game{pkid: pkid, name: name} = game) do
     {:ok, _} = Persistence.update_game(%Persistence.Game{id: pkid, name: name}, %{state: game})
 
+    ScrabbleExWeb.Endpoint.broadcast("user_dashboard:game:#{pkid}", "game_updated", %{game: game})
+
     game
   end
 
   defp add_player_assoc(%Game{pkid: pkid}, user) do
     Persistence.add_player_to_game(pkid, user.id)
+    ScrabbleExWeb.Endpoint.broadcast("user_dashboard:#{user.id}", "game_joined", %{game_id: pkid})
   end
 
   def handle_info(:timeout, state) do

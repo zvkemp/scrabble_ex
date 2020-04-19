@@ -20,7 +20,6 @@
 #board-container {
   display: grid;
   width: fit-content;
-  /* FIXME: use configurable board size */
   grid-template-columns: repeat(15, 30px); 
   grid-template-rows: repeat(15, 30px);
   grid-gap: 1px;

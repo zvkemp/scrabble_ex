@@ -712,7 +712,6 @@ defmodule ScrabbleEx.Game do
     merge(game, %{racks: new_racks, bag: new_lc})
   end
 
-  # FIXME: subtract remaining tiles from scores
   defp check_game_over(%Game{racks: racks} = game) do
     if any?(racks, fn {_player, rack} -> empty?(rack) end) ||
          (game.pass_count && game.pass_count >= count(game.players) * 2) do

@@ -34,17 +34,6 @@
   <% end %>
 </section>
 
-<section label="games">
-  <table>
-    <thead>
-      <th>name</th>
-      <th>players</th>
-      <th></th>
-    </thead>
-    <tbody>
-      <%= for game <- assigns[:games] do %>
-        <%= render("game.html", conn: @conn, game: game) %>
-      <% end %>
-    </tbody>
-  </table>
+<section label="live-games">
+  <%= live_render(@conn, ScrabbleExWeb.DashboardLive) %>
 </section>

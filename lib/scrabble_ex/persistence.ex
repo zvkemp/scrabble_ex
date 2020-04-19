@@ -23,6 +23,15 @@ defmodule ScrabbleEx.Persistence do
     Repo.all(Game)
   end
 
+  def list_games(user_id: user_id) do
+    Repo.all(
+      from g in Game,
+        join: gu in "games_users",
+        on: gu.game_id == g.id and gu.user_id == ^user_id,
+        order_by: {:desc, g.updated_at}
+    )
+  end
+
   @doc """
   Gets a single game.
 

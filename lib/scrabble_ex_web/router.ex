@@ -8,6 +8,7 @@ defmodule ScrabbleExWeb.Router do
     plug :fetch_live_flash
     plug :protect_from_forgery
     plug :put_secure_browser_headers
+    plug :put_root_layout, {ScrabbleExWeb.LayoutView, :root}
   end
 
   pipeline :api do
@@ -31,10 +32,13 @@ defmodule ScrabbleExWeb.Router do
     get "/play/:id", PageController, :show
 
     post "/play", PageController, :create
+
+    # FIXME: this is also rendered in "/hello", should probably remove this route
+    live "/dashboard", DashboardLive
   end
 
   if Mix.env() == :dev do
-    scope "/" do
+    scope "/admin" do
       pipe_through :browser
       live_dashboard "/dashboard"
     end
