@@ -22,10 +22,11 @@ defmodule ScrabbleExWeb.PageView do
 
   def show_game_turn(player, %{current_player: current_player}) when is_binary(player) do
     case current_player do
-      ^player -> raw "<span class='your-turn'>your turn</span>"
-      nil -> raw "<span class='not-started'>not started</span>"
+      ^player -> raw("<span class='your-turn'>your turn</span>")
+      nil -> raw("<span class='not-started'>not started</span>")
       _ -> "#{current_player}'s turn"
     end
   end
+
   def show_game_turn(a, b), do: ""
 end

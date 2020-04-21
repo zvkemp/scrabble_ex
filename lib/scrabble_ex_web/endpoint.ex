@@ -36,9 +36,10 @@ defmodule ScrabbleExWeb.Endpoint do
     plug Phoenix.CodeReloader
   end
 
-
   plug Phoenix.LiveDashboard.RequestLogger,
-    param_key: "request_logger", cookie_key: "request_logget sr"
+    param_key: "request_logger",
+    cookie_key: "request_logget sr"
+
   plug Plug.RequestId
   plug Plug.Telemetry, event_prefix: [:phoenix, :endpoint]
 

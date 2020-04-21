@@ -4,6 +4,7 @@ defmodule ScrabbleExWeb.GameChannel do
   require ScrabbleExWeb.Presence
   alias ScrabbleExWeb.Presence
   import ScrabbleExWeb.Endpoint, only: [signing_salt: 0]
+  alias ScrabbleEx.InvitationBroker
 
   def join("game:lobby", _message, socket) do
     {:ok, socket}
@@ -41,6 +42,12 @@ defmodule ScrabbleExWeb.GameChannel do
     {:noreply, assign(socket, :presence_ref, presence_ref)}
   end
 
+  def handle_in("broadcast_invite", payload, socket) do
+    InvitationBroker.invite_user(:all, socket.assigns.game_id)
+
+    {:noreply, socket}
+  end
+
   def handle_in("proposed", payload, socket) do
     game = call(socket, :state)
 
@@ -60,8 +67,8 @@ defmodule ScrabbleExWeb.GameChannel do
   end
 
   def handle_in("start", _payload, socket) do
-    call(socket, :start)
-    |> broadcast_call_result(socket, reply: :ok)
+    call(socket, :start_game)
+    |> broadcast_call_result(socket, reply: :ok, callback: &InvitationBroker.game_started(&1.name))
   end
 
   def handle_in("swap", payload, socket) do
@@ -144,6 +151,19 @@ defmodule ScrabbleExWeb.GameChannel do
           game,
           Keyword.get(opts, :success_msg)
         )
+
+        case Keyword.get(opts, :callback) do
+          nil ->
+            nil
+
+          {mod, fun, args} ->
+            apply(mod, fun, args)
+
+          fun ->
+            if is_function(fun) do
+              fun.(game)
+            end
+        end
 
         case Keyword.get(opts, :reply) do
           nil -> {:noreply, socket}

@@ -588,11 +588,20 @@ class Scrabble {
       data.push(0);
     }
 
-    let selection = this.header.selectAll('button').data(data);
+    let selection = this.header.selectAll('div').data(data);
     let channel = this.channel
 
-    selection.enter()
-      .append('button')
+    let el = selection.enter()
+      .append('div')
+
+    el.append('button')
+      .attr('class', 'broadcast-button')
+      .html('invite')
+      .on('click', () => { channel.push("broadcast_invite") });
+
+    el.append('br')
+
+    el.append('button')
       .attr('class', 'start-button')
       .html("click here to start after everyone has joined")
       .on("click", () => { channel.push("start") });

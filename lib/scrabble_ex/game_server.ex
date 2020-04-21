@@ -26,6 +26,10 @@ defmodule ScrabbleEx.GameServer do
     GenServer.call({:global, "game:#{name}"}, :state)
   end
 
+  def get(name, mapper) do
+    GenServer.call({:global, "game:#{name}"}, {:state, mapper})
+  end
+
   def start([name: {:global, "game:" <> id}] = opts) do
     start(id, opts)
   end
@@ -69,6 +73,10 @@ defmodule ScrabbleEx.GameServer do
 
   def handle_call(:state, _from, game) do
     {:reply, game, game, @game_timeout}
+  end
+
+  def handle_call({:state, mapper}, _from, game) do
+    {:reply, mapper.(game), game, @game_timeout}
   end
 
   def handle_call({:set_rack, player, rack}, _from, game) do
@@ -135,9 +143,11 @@ defmodule ScrabbleEx.GameServer do
     game
   end
 
-  defp add_player_assoc(%Game{pkid: pkid}, user) do
+  defp add_player_assoc(%Game{pkid: pkid, name: name}, user) do
     Persistence.add_player_to_game(pkid, user.id)
-    ScrabbleExWeb.Endpoint.broadcast("user_dashboard:#{user.id}", "game_joined", %{game_id: pkid})
+    # FIXME: use PubSub to handle both of these
+    ScrabbleEx.InvitationBroker.player_joined(name, user.username)
+    ScrabbleExWeb.Endpoint.broadcast("user_dashboard:#{user.id}", "game_joined", %{game_name: name, game_id: pkid})
   end
 
   def handle_info(:timeout, state) do

@@ -1,11 +1,15 @@
-<tr class="game-row <%= if @game.state.game_over, do: "game-over", else: @game.state.current_player == @conn.assigns.player && "your-turn" %>">
+<tr class="game-row <%= if @game.game_over, do: "game-over", else: @game.current_player == @user.username && "your-turn" %>">
   <td>
-    <%= link @game.name, to: Routes.page_path(@conn, :show, @game.name) %>
+    <%= link @game.name, to: Routes.page_path(@socket, :show, @game.name) %>
   </td>
   <td>
-    <%= show_players(@game.state) %>
+    <%= @game.players %>
   </td>
   <td>
-    <%= show_game_turn(@conn, @game.state) %>
+    <%= if assigns[:invitation] do %>
+      INVITED
+    <% else %>
+      <%= show_game_turn(@user, @game) %>
+    <% end %>
   </td>
 </tr>

@@ -15,6 +15,7 @@ defmodule ScrabbleEx.Application do
       # Starts a worker by calling: ScrabbleEx.Worker.start_link(arg)
       # {ScrabbleEx.Worker, arg},
       ScrabbleEx.Dictionary,
+      ScrabbleEx.InvitationBroker,
       ScrabbleExWeb.Presence
     ]
 

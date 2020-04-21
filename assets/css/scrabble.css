@@ -322,3 +322,7 @@ span.your-turn {
   padding: 2px;
   margin-left: 8pt;
 }
+
+.broadcast-button {
+  background-color: green;
+}

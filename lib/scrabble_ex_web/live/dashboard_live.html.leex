@@ -1,0 +1,18 @@
+<section label="games">
+  <table>
+    <thead>
+      <th>name</th>
+      <th>players</th>
+      <th></th>
+    </thead>
+    <tbody>
+      <%= for invitation <- @invitations do %>
+        <%= Phoenix.View.render(ScrabbleExWeb.PageView, "game.html", socket: @socket, user: @user, game: invitation, invitation: true) %>
+      <% end %>
+
+      <%= for game <- @games do %>
+        <%= Phoenix.View.render(ScrabbleExWeb.PageView, "game.html", socket: @socket, user: @user, game: game) %>
+      <% end %>
+    </tbody>
+  </table>
+</section>
