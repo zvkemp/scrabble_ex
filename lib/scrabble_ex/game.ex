@@ -341,11 +341,12 @@ defmodule ScrabbleEx.Game do
       ) do
     letter_map = normalize_map(letter_map, board.size)
     first_turn = empty?(log)
+    crosses_center = :ok == validate_crosses_center(letter_map, game.board.size)
     turn = %Turn{player: player, letter_map: letter_map}
 
     with :ok <- validate_play(turn, game),
          {:ok, new_board} <- Board.merge_and_validate(board, letter_map),
-         {:ok, score} <- Score.score(board, new_board, letter_map, first_turn) do
+         {:ok, score} <- Score.score(board, new_board, letter_map, crosses_center) do
       {:ok, score}
     else
       {:error, _msg} = e -> e
@@ -376,12 +377,13 @@ defmodule ScrabbleEx.Game do
       ) do
     letter_map = normalize_map(letter_map, board.size)
     first_turn = empty?(log)
+    crosses_center = :ok == validate_crosses_center(letter_map, game.board.size)
     turn = %Turn{player: player, letter_map: letter_map}
 
     with :ok <- validate_current_player(game, player),
          :ok <- validate_play(turn, game),
          {:ok, new_board} <- Board.merge_and_validate(board, letter_map),
-         {:ok, score} <- Score.valid_score(board, new_board, letter_map, first_turn) do
+         {:ok, score} <- Score.valid_score(board, new_board, letter_map, crosses_center) do
       new_scores = update(scores, player, [score], fn xs -> [score | xs] end)
       # remove played letters
       new_racks =
@@ -546,6 +548,8 @@ defmodule ScrabbleEx.Game do
     end
   end
 
+  # FIXME: this validation may no longer be necessary. crosses_center
+  # should apply in validate play
   defp validate_first_play(%Turn{} = turn, %Game{} = game) do
     with :ok <- validate_crosses_center(turn.letter_map, game.board.size),
          :ok <- validate_length(turn.letter_map, 2),
@@ -675,6 +679,7 @@ defmodule ScrabbleEx.Game do
     end
   end
 
+  # FIXME: add crosses_center? query method
   defp validate_crosses_center(letter_map, board_size) do
     center_index = div(board_size, 2) * board_size + div(board_size, 2)
 

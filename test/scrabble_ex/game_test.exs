@@ -56,6 +56,37 @@ defmodule ScrabbleEx.GameTest do
     assert {:error, "word is not continuous"} = result
   end
 
+  @tag :focus
+  test "first play after swap" do
+    bag = ~w[
+      J O K E S X V O K E R S Q Z T N A L E B B
+    ]
+
+    {:ok, game} =
+      Game.new("foo", players: ["zach", "kate"], bag: bag, start_at: 1)
+      |> Game.start()
+
+    {:ok, game} =
+      Game.swap(game, "kate", %{"1" => "O", "2" => "K"})
+
+    IO.inspect(game.racks)
+
+    IO.inspect(game.log)
+
+    assert(game.current_player == "zach")
+
+    assert {:ok, game} = result =
+      Game.play(game, "zach", %{
+        52 => "J",
+        67 => "O",
+        82 => "K",
+        97 => "E",
+        112 => "S"
+      })
+
+    # assert result.current_player == "kate"
+  end
+
   test "first play with blanks" do
     bag = ~w[
       BLANK BLANK O E S X V O K E R S Q Z T N A L E B B
