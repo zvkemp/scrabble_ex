@@ -67,7 +67,7 @@ defmodule ScrabbleExWeb.GameChannel do
   end
 
   def handle_in("start", _payload, socket) do
-    call(socket, :start_game)
+    call(socket, :start)
     |> broadcast_call_result(socket, reply: :ok, callback: &InvitationBroker.game_started(&1.name))
   end
 
