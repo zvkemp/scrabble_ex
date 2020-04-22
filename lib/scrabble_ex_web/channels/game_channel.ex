@@ -81,8 +81,7 @@ defmodule ScrabbleExWeb.GameChannel do
     |> broadcast_call_result(socket, reply: :ok, success_msg: "#{socket.assigns.player} passed.")
   end
 
-  # FIXME: rename "submit_payload" => "play"
-  def handle_in("submit_payload", payload, socket) do
+  def handle_in("play", payload, socket) do
     call(socket, {:play, socket.assigns.player, payload})
     |> broadcast_call_result(
       socket,

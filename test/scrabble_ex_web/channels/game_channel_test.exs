@@ -121,11 +121,11 @@ defmodule ScrabbleExWeb.GameChannelTest do
     ref = push(zach, "pass")
     assert_reply(ref, :error, %{message: "you shall not pass"})
 
-    ref = push(kate, "submit_payload", %{"112" => "S", "113" => "0"})
+    ref = push(kate, "play", %{"112" => "S", "113" => "0"})
     assert_reply(ref, :error, %{message: "it is not kate's turn"})
 
     ref =
-      push(zach, "submit_payload", %{
+      push(zach, "play", %{
         "52" => "J",
         "67" => "O",
         "82" => "K",
@@ -165,7 +165,7 @@ defmodule ScrabbleExWeb.GameChannelTest do
     ref = push(kate, "proposed", payload)
     assert_reply(ref, :ok, %{message: "JOKERS: 34"})
 
-    ref = push(kate, "submit_payload", payload)
+    ref = push(kate, "play", payload)
     assert_reply(ref, :ok, %{})
 
     %Game{scores: scores} = game = game_state()
@@ -178,7 +178,7 @@ defmodule ScrabbleExWeb.GameChannelTest do
            } = scores
 
     ref =
-      push(zach, "submit_payload", %{
+      push(zach, "play", %{
         "38" => "T",
         "68" => "N",
         "83" => "A",
@@ -239,7 +239,7 @@ defmodule ScrabbleExWeb.GameChannelTest do
     game = game_state()
 
     assert game.current_player == "zach"
-    ref = push(zach, "submit_payload", %{"112" => "Z", "113" => "O", "114" => "T"})
+    ref = push(zach, "play", %{"112" => "Z", "113" => "O", "114" => "T"})
 
     # assert_broadcast("state", %Game{})
     assert_reply(ref, :error, %{message: "player does not have the goods" <> _})
@@ -280,7 +280,7 @@ defmodule ScrabbleExWeb.GameChannelTest do
     assert_intercepted_broadcast([zach, kate], game)
 
     ref =
-      push(zach, "submit_payload", %{
+      push(zach, "play", %{
         "52" => "J",
         "67" => "O",
         "82" => "K",
@@ -294,7 +294,7 @@ defmodule ScrabbleExWeb.GameChannelTest do
     assert game_state().referee.tries_remaining == 2
 
     ref =
-      push(zach, "submit_payload", %{
+      push(zach, "play", %{
         "52" => "J",
         "67" => "O",
         "82" => "X",
@@ -308,7 +308,7 @@ defmodule ScrabbleExWeb.GameChannelTest do
     assert game_state().referee.tries_remaining == 1
 
     ref =
-      push(zach, "submit_payload", %{
+      push(zach, "play", %{
         "52" => "J",
         "67" => "O",
         "82" => "K",

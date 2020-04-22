@@ -381,7 +381,7 @@ class Scrabble {
   }
 
   submitProposed() {
-    this.push("submit_payload", this.proposed)
+    this.push("play", this.proposed)
       .receive("ok", (payload) => this.handleRack(payload));
   }
 

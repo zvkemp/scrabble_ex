@@ -285,7 +285,7 @@ defmodule ScrabbleEx.Game do
 
   def next_player(%Game{current_player: nil} = game) do
     idx =
-      case get(game.opts || [], :start_at, :rand) do
+      case Keyword.get(game.opts || [], :start_at, :rand) do
         :rand -> :rand.uniform(count(game.players)) - 1
         n when is_integer(n) -> n
       end
