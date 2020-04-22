@@ -15,7 +15,7 @@ config :scrabble_ex, ScrabbleExWeb.Endpoint,
   url: [host: "localhost"],
   secret_key_base: "Cfan9jVmRCwMTUfOygrhMAIlXUUXAwcBRkmUIggYUETiq6Tb1O0hTNqJl3Qe0+hh",
   render_errors: [view: ScrabbleExWeb.ErrorView, accepts: ~w(html json)],
-  pubsub: [name: ScrabbleEx.PubSub, adapter: Phoenix.PubSub.PG2],
+  pubsub_server: ScrabbleEx.PubSub,
   live_view: [signing_salt: "Q5UT3WNP"]
 
 # Configures Elixir's Logger
