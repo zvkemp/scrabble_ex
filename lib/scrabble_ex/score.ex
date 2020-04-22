@@ -3,11 +3,13 @@ defmodule ScrabbleEx.Score do
 
   import Enum, only: [count: 1, at: 2]
 
-  def score(board, new_board, letter_map, crosses_center \\ false) do
+  def score(board, new_board, letter_map) do
     words_to_score = Board.word_maps(new_board) -- Board.word_maps(board)
 
     # if there's only 1 word, it must be longer than the letters played (validate connected)
     word_count = Enum.count(words_to_score)
+
+    crosses_center = Board.crosses_center?(board, letter_map)
 
     if word_count == 0 ||
          (!crosses_center && word_count == 1 &&
@@ -46,8 +48,8 @@ defmodule ScrabbleEx.Score do
     end
   end
 
-  def valid_score(board, new_board, letter_map, crosses_center \\ false) do
-    case score(board, new_board, letter_map, crosses_center) do
+  def valid_score(board, new_board, letter_map) do
+    case score(board, new_board, letter_map) do
       {:ok, _} = scores -> validate_words(scores)
       {:error, _} = e -> e
     end

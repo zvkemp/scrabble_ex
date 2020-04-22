@@ -98,13 +98,13 @@ defmodule ScrabbleEx.Game do
 
   # players: players, board: board, bag: bag) do
   defp _new(name, opts) do
-    import Keyword, only: [fetch!: 2, get: 2, get: 3, get_lazy: 3]
+    import Keyword, only: [get: 2, get: 3, get_lazy: 3]
 
     players = get(opts, :players, [])
     board_type = get(opts, :board_type, :standard)
     board = get_lazy(opts, :board, fn -> Board.new(board_type) end)
 
-    board = if Keyword.get(opts, :scramble, false), do: Board.scramble(board), else: board
+    board = if get(opts, :scramble, false), do: Board.scramble(board), else: board
 
     %__MODULE__{
       players: players,
@@ -229,35 +229,6 @@ defmodule ScrabbleEx.Game do
     end
   end
 
-  def remaining_letters(game) do
-    remaining_letters(game, [])
-  end
-
-  def remaining_letters(%{racks: racks} = game, player) when is_binary(player) do
-    remaining_letters(game, racks[player])
-  end
-
-  def last_turn_indices(game) do
-    case Enum.at(game.log, 0) do
-      [player, {:play, map}] -> Map.keys(map)
-      _ -> []
-    end
-  end
-
-  def remaining_letters(%{racks: racks, bag: bag}, omit) when is_list(omit) do
-    (((Map.values(racks) |> List.flatten()) ++ bag) -- omit)
-    |> Enum.sort_by(fn
-      "BLANK" -> "ZZZ"
-      char -> char
-    end)
-    |> Enum.reduce([], fn
-      char, [] -> [[char, 1]]
-      char, [[other_char, count] | tail] when char == other_char -> [[char, count + 1] | tail]
-      char, [_ | _] = tail -> [[char, 1] | tail]
-    end)
-    |> Enum.reverse()
-  end
-
   def add_player(%Game{current_player: nil} = game, player) do
     case has_key?(game.racks, player) do
       false ->
@@ -275,6 +246,35 @@ defmodule ScrabbleEx.Game do
     end
   end
 
+  def remaining_letters(game) do
+    remaining_letters(game, [])
+  end
+
+  def remaining_letters(%{racks: racks} = game, player) when is_binary(player) do
+    remaining_letters(game, racks[player])
+  end
+
+  def last_turn_indices(game) do
+    case Enum.at(game.log, 0) do
+      [_player, {:play, map}] -> keys(map)
+      _ -> []
+    end
+  end
+
+  def remaining_letters(%{racks: racks, bag: bag}, omit) when is_list(omit) do
+    (((values(racks) |> List.flatten()) ++ bag) -- omit)
+    |> Enum.sort_by(fn
+      "BLANK" -> "ZZZ"
+      char -> char
+    end)
+    |> Enum.reduce([], fn
+      char, [] -> [[char, 1]]
+      char, [[other_char, count] | tail] when char == other_char -> [[char, count + 1] | tail]
+      char, [_ | _] = tail -> [[char, 1] | tail]
+    end)
+    |> Enum.reverse()
+  end
+
   def start(%Game{current_player: nil} = game) do
     {:ok, next_player(game)}
   end
@@ -285,7 +285,7 @@ defmodule ScrabbleEx.Game do
 
   def next_player(%Game{current_player: nil} = game) do
     idx =
-      case Keyword.get(game.opts || [], :start_at, :rand) do
+      case get(game.opts || [], :start_at, :rand) do
         :rand -> :rand.uniform(count(game.players)) - 1
         n when is_integer(n) -> n
       end
@@ -313,12 +313,8 @@ defmodule ScrabbleEx.Game do
     put(game, :current_player, Enum.at(game.players, index))
   end
 
-  defp new_bag(board_type \\ :standard) when is_atom(board_type) do
+  defp new_bag(board_type) when is_atom(board_type) do
     new_bag(counts(board_type))
-  end
-
-  defp new_super_bag do
-    new_bag(@super_counts)
   end
 
   defp new_bag(counts) when is_map(counts) do
@@ -340,21 +336,15 @@ defmodule ScrabbleEx.Game do
         letter_map
       ) do
     letter_map = normalize_map(letter_map, board.size)
-    first_turn = empty?(log)
-    crosses_center = :ok == validate_crosses_center(letter_map, game.board.size)
     turn = %Turn{player: player, letter_map: letter_map}
 
     with :ok <- validate_play(turn, game),
          {:ok, new_board} <- Board.merge_and_validate(board, letter_map),
-         {:ok, score} <- Score.score(board, new_board, letter_map, crosses_center) do
+         {:ok, score} <- Score.score(board, new_board, letter_map) do
       {:ok, score}
     else
       {:error, _msg} = e -> e
     end
-  end
-
-  def play(%Game{game_over: true}, _player, _letter_map) do
-    {:error, "game is over"}
   end
 
   def total_scores(%Game{scores: scores}) do
@@ -370,20 +360,22 @@ defmodule ScrabbleEx.Game do
     )
   end
 
+  def play(%Game{game_over: true}, _player, _letter_map) do
+    {:error, "game is over"}
+  end
+
   def play(
         %__MODULE__{scores: scores, log: log, board: board} = game,
         player,
         letter_map
       ) do
     letter_map = normalize_map(letter_map, board.size)
-    first_turn = empty?(log)
-    crosses_center = :ok == validate_crosses_center(letter_map, game.board.size)
     turn = %Turn{player: player, letter_map: letter_map}
 
     with :ok <- validate_current_player(game, player),
          :ok <- validate_play(turn, game),
          {:ok, new_board} <- Board.merge_and_validate(board, letter_map),
-         {:ok, score} <- Score.valid_score(board, new_board, letter_map, crosses_center) do
+         {:ok, score} <- Score.valid_score(board, new_board, letter_map) do
       new_scores = update(scores, player, [score], fn xs -> [score | xs] end)
       # remove played letters
       new_racks =
@@ -430,15 +422,11 @@ defmodule ScrabbleEx.Game do
   end
 
   defp referee(game) do
-    (game.referee || default_referee).__struct__
+    (game.referee || default_referee()).__struct__
   end
 
   defp default_referee do
     struct(ScrabbleEx.Referee)
-  end
-
-  def swap(%Game{game_over: true} = game, player, _str) do
-    play(game, player, %{})
   end
 
   def pass(%Game{game_over: true} = game, player) do
@@ -460,6 +448,10 @@ defmodule ScrabbleEx.Game do
       false -> {:error, "you shall not pass"}
       {:error, _} = e -> e
     end
+  end
+
+  def swap(%Game{game_over: true} = game, player, _str) do
+    play(game, player, %{})
   end
 
   def swap(game, player, letter_map) when is_map(letter_map) do
@@ -535,12 +527,13 @@ defmodule ScrabbleEx.Game do
     String.upcase(c)
   end
 
-  defp validate_play(%Turn{} = turn, %Game{log: []} = game) do
-    validate_first_play(turn, game)
-  end
+  # defp validate_play(%Turn{} = turn, %Game{log: []} = game) do
+  #   validate_first_play(turn, game)
+  # end
 
   defp validate_play(%Turn{} = turn, %Game{} = game) do
-    with :ok <- validate_length(turn.letter_map, 1),
+    with :ok <- validate_first_play(turn, game),
+         :ok <- validate_length(game.board, turn.letter_map),
          :ok <- validate_common(turn, game) do
       :ok
     else
@@ -548,15 +541,26 @@ defmodule ScrabbleEx.Game do
     end
   end
 
-  # FIXME: this validation may no longer be necessary. crosses_center
-  # should apply in validate play
+  # This validation is here only to make the first turn
+  # 'not connected' message nicer; i.e., 'word does not cross center'
   defp validate_first_play(%Turn{} = turn, %Game{} = game) do
-    with :ok <- validate_crosses_center(turn.letter_map, game.board.size),
-         :ok <- validate_length(turn.letter_map, 2),
-         :ok <- validate_common(turn, game) do
+    with :ok <- validate_no_words_have_been_played(game),
+         :ok <- validate_crosses_center(game, turn.letter_map) do
       :ok
     else
+      :not_first_turn -> :ok # just continue
       {:error, msg} -> {:error, msg}
+    end
+  end
+
+  defp validate_no_words_have_been_played(game) do
+    if Enum.all?(game.scores, fn
+         {_, []} -> true
+         _ -> false
+       end) do
+      :ok
+    else
+      :not_first_turn
     end
   end
 
@@ -671,7 +675,9 @@ defmodule ScrabbleEx.Game do
     end
   end
 
-  defp validate_length(letter_map, min) do
+  defp validate_length(board, letter_map) do
+    min = if Board.crosses_center?(board, letter_map), do: 2, else: 1
+
     if letter_map |> count() >= min do
       :ok
     else
@@ -679,11 +685,8 @@ defmodule ScrabbleEx.Game do
     end
   end
 
-  # FIXME: add crosses_center? query method
-  defp validate_crosses_center(letter_map, board_size) do
-    center_index = div(board_size, 2) * board_size + div(board_size, 2)
-
-    if letter_map |> has_key?(center_index) do
+  defp validate_crosses_center(game, letter_map) do
+    if Board.crosses_center?(game.board, letter_map) do
       :ok
     else
       {:error, "does not cross center"}

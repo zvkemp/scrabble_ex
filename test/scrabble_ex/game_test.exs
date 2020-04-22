@@ -15,12 +15,9 @@ defmodule ScrabbleEx.GameTest do
   end
 
   test "first play does not cross center", %{game: game} do
-    result =
-      Game.play(game, "zach", %{
-        {0, 0} => "a",
-        {0, 1} => "a",
-        {0, 2} => "a"
-      })
+    rack = game.racks["zach"]
+
+    result = Game.play(game, "zach", Enum.zip([1, 2, 3], rack) |> Enum.into(%{}))
 
     assert {:error, "does not cross center"} = result
   end
@@ -66,23 +63,19 @@ defmodule ScrabbleEx.GameTest do
       Game.new("foo", players: ["zach", "kate"], bag: bag, start_at: 1)
       |> Game.start()
 
-    {:ok, game} =
-      Game.swap(game, "kate", %{"1" => "O", "2" => "K"})
-
-    IO.inspect(game.racks)
-
-    IO.inspect(game.log)
+    {:ok, game} = Game.swap(game, "kate", %{"1" => "O", "2" => "K"})
 
     assert(game.current_player == "zach")
 
-    assert {:ok, game} = result =
-      Game.play(game, "zach", %{
-        52 => "J",
-        67 => "O",
-        82 => "K",
-        97 => "E",
-        112 => "S"
-      })
+    assert {:ok, game} =
+             result =
+             Game.play(game, "zach", %{
+               52 => "J",
+               67 => "O",
+               82 => "K",
+               97 => "E",
+               112 => "S"
+             })
 
     # assert result.current_player == "kate"
   end

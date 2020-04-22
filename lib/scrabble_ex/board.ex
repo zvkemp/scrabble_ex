@@ -75,6 +75,11 @@ defmodule ScrabbleEx.Board do
       "3w .  .  3l .  3w .  3l .  .  3w"
   end
 
+  def crosses_center?(board, letter_map) do
+    center_index = div(board.size * board.size, 2)
+    letter_map |> Map.has_key?(center_index)
+  end
+
   defp parsed_standard do
     parse(standard_str())
   end
