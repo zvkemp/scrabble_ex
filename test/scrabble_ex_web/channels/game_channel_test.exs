@@ -60,13 +60,9 @@ defmodule ScrabbleExWeb.GameChannelTest do
   end
 
   def start_game do
-    GenServer.call({:global, "game:default"}, :start_game)
+    GenServer.call({:global, "game:default"}, :start)
   end
 
-  # def assert_player_state_push(to_socket, term) do
-  #   term = Map.put(term, :join_ref, to_socket.join_ref)
-  #   assert_push("player-state", )
-  # end
   def assert_player_state_push(join_ref, rack, current_player) do
     assert_push("player-state", %{
       rack: ^rack,

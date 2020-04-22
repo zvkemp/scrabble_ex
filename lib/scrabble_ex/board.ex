@@ -110,7 +110,6 @@ defmodule ScrabbleEx.Board do
   defp parse_fragment("4w"), do: :quad_word
 
   defp parse_fragment("."), do: nil
-  # FIXME: match on length
   defp parse_fragment(<<_::bytes-size(1)>> = f), do: f
 
   def new() do

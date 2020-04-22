@@ -63,12 +63,6 @@ class Scrabble {
       .receive("ok", resp => { console.log(`joined game:${this.game_id}`, resp) })
       .receive("error", resp => { console.error("unable to join", resp) })
 
-    // FIXME: remove after deploy
-    this.channel.on("state", payload => {
-
-      this.handleGameState(payload)
-    });
-
     this.channel.on("player-state", ({game, rack, remaining}) => {
       if (game) { this.handleGameState({ game }) }
       if (rack) { this.handleRack({ rack }) }

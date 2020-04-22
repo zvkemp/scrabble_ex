@@ -84,8 +84,7 @@ defmodule ScrabbleEx.GameServer do
     end)
   end
 
-  def handle_call(:start_game, _from, game) do
-    # FIXME: standardize name of fn
+  def handle_call(:start, _from, game) do
     apply_game_fn(:start, [], game)
   end
 

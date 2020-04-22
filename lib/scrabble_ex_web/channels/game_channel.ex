@@ -28,7 +28,6 @@ defmodule ScrabbleExWeb.GameChannel do
 
         {:ok,
          socket
-         # FIXME: assign game pid?
          |> assign(:game_id, game_id)
          |> assign(:player, player)
          |> assign(:user_id, user.id)}
@@ -38,7 +37,6 @@ defmodule ScrabbleExWeb.GameChannel do
   def handle_info(:after_join, socket) do
     game = call(socket, :state)
     broadcast!(socket, "player-state", %{game: game})
-    # FIXME: how should this be used?
     {:ok, presence_ref} = Presence.track(socket, socket.assigns.user_id, socket.assigns)
     {:noreply, assign(socket, :presence_ref, presence_ref)}
   end
@@ -62,7 +60,7 @@ defmodule ScrabbleExWeb.GameChannel do
   end
 
   def handle_in("start", _payload, socket) do
-    call(socket, :start_game)
+    call(socket, :start)
     |> broadcast_call_result(socket, reply: :ok)
   end
 
@@ -75,7 +73,6 @@ defmodule ScrabbleExWeb.GameChannel do
     )
   end
 
-  # FIXME: game could end here
   def handle_in("pass", payload, socket) do
     call(socket, {:pass, socket.assigns.player})
     |> broadcast_call_result(socket, reply: :ok, success_msg: "#{socket.assigns.player} passed.")
