@@ -1,4 +1,4 @@
-<tr class="game-row <%= if @game.game_over, do: "game-over", else: @game.current_player == @user.username && "your-turn" %>">
+<tr id="game-<%= @game.id %>" class="game-row <%= if @game.game_over, do: "game-over", else: @game.current_player == @user.username && "your-turn" %>">
   <td>
     <%= link @game.name, to: Routes.page_path(@socket, :show, @game.name) %>
   </td>

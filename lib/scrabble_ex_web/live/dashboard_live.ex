@@ -4,21 +4,34 @@ defmodule ScrabbleExWeb.DashboardLive do
   # FIXME: optionally show pending games to public
   # FIXME: invite user in game view
   use Phoenix.LiveView, layout: {ScrabbleExWeb.LayoutView, "live.html"}
+  require Logger
 
   def mount(_params, %{"current_user_id" => user_id}, socket) do
-    ScrabbleExWeb.Endpoint.subscribe("user_dashboard_all")
-    ScrabbleExWeb.Endpoint.subscribe("user_dashboard:#{user_id}")
+    ScrabbleEx.PubSub.subscribe("user_dashboard_all")
+    ScrabbleEx.PubSub.subscribe("user_dashboard:#{user_id}")
 
     user = ScrabbleEx.Players.get_user!(user_id)
-    ScrabbleExWeb.Endpoint.subscribe("user_dashboard:#{user.username}")
+    ScrabbleEx.PubSub.subscribe("user_dashboard:#{user.username}")
 
     socket =
       socket
+      |> Map.put(:game_subscriptions, MapSet.new())
       |> assign(:user, user)
       |> load_games()
       |> get_all_invitations()
 
+    # FIXME: maybe this shouldn't be temporary assigns.
+    # - it's difficult or impossible to sort the entire list of games.
+    # It might be better to keep several lists:
+    #
+    # - active invites
+    # - active games (still possible to sort this list?)
+    # - inactive games (this can be in temporary assigns, as we likely dont
+    #
+    # maybe we *can* keep the list in temporary assigns, and have an 'invalidation key' on the wrapper element,
+    # forcing a re-render when the list needs to be re-sorted?
     {:ok, socket}
+       #, temporary_assigns: [games: []]}
   end
 
   defp load_games(socket) do
@@ -46,11 +59,27 @@ defmodule ScrabbleExWeb.DashboardLive do
       |> List.flatten()
       |> Enum.map(&to_game_meta/1)
 
-    for game <- games do
-      ScrabbleExWeb.Endpoint.subscribe("user_dashboard:game:#{game.id}")
-    end
+    socket = Enum.reduce(games, socket, &subscribe_once/2)
 
     assign(socket, :games, games)
+  end
+
+  defp subscribe_once(%Phoenix.LiveView.Socket{} = socket, game) do
+    subscribe_once(game, socket)
+  end
+
+  defp subscribe_once(%ScrabbleEx.Game{} = game, socket) do
+    subscribe_once(to_game_meta(game), socket)
+  end
+
+  defp subscribe_once(%{id: id}, socket) do
+    cond do
+      MapSet.member?(socket.game_subscriptions, id) -> socket
+      true ->
+        Logger.debug("subscribing #{socket.id} to #{id}")
+        ScrabbleEx.PubSub.subscribe("user_dashboard:game:#{id}")
+        Map.update(socket, :game_subscriptions, MapSet.new(), &MapSet.put(&1, id))
+    end
   end
 
   # present information meaningful to this template (try to keep LiveView's in-memory state as light as possible)
@@ -115,9 +144,12 @@ defmodule ScrabbleExWeb.DashboardLive do
     {:noreply, assign(socket, :str, str)}
   end
 
-  def handle_info(%{event: "game_updated"} = payload, socket) do
+  def handle_info(%{event: "game_updated", payload: payload}, socket) do
+    # IO.inspect({"game_updated #{socket.id}", payload})
     # FIXME: avoid requerying DB for all updated games; we should be able to
     # get the new state from the event.
+    # socket = subscribe_once(payload.game, socket)
+    # {:noreply, assign(socket, :games, [to_game_meta(payload.game)])}
     {:noreply, load_games(socket)}
   end
 
