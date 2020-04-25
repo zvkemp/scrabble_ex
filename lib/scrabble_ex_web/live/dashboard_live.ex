@@ -32,7 +32,7 @@ defmodule ScrabbleExWeb.DashboardLive do
     # maybe we *can* keep the list in temporary assigns, and have an 'invalidation key' on the wrapper element,
     # forcing a re-render when the list needs to be re-sorted?
     {:ok, socket}
-       #, temporary_assigns: [games: []]}
+    # , temporary_assigns: [games: []]}
   end
 
   defp load_games(socket) do
@@ -75,7 +75,9 @@ defmodule ScrabbleExWeb.DashboardLive do
 
   defp subscribe_once(%{id: id}, socket) do
     cond do
-      MapSet.member?(socket.game_subscriptions, id) -> socket
+      MapSet.member?(socket.game_subscriptions, id) ->
+        socket
+
       true ->
         Logger.debug("subscribing #{socket.id} to #{id}")
         ScrabbleEx.PubSub.subscribe("user_dashboard:game:#{id}")
@@ -115,12 +117,13 @@ defmodule ScrabbleExWeb.DashboardLive do
 
   defp get_all_invitations(socket) do
     socket = assign(socket, :invitations, [])
+
     ScrabbleEx.InvitationBroker.get_all_invitations(socket.assigns.user.username)
     |> Enum.reduce(socket, fn name, s -> add_invitation(s, name) end)
   end
 
   defp add_invitation(socket, game_name) do
-    if Enum.all?(socket.assigns.games, & &1.name != game_name) do
+    if Enum.all?(socket.assigns.games, &(&1.name != game_name)) do
       existing = socket.assigns.invitations || []
       assign(socket, :invitations, [to_game_meta(game_name) | existing] |> Enum.uniq_by(& &1.id))
     else

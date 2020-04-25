@@ -548,7 +548,8 @@ defmodule ScrabbleEx.Game do
          :ok <- validate_crosses_center(game, turn.letter_map) do
       :ok
     else
-      :not_first_turn -> :ok # just continue
+      # just continue
+      :not_first_turn -> :ok
       {:error, msg} -> {:error, msg}
     end
   end
