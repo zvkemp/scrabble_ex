@@ -3,6 +3,7 @@ defmodule ScrabbleExWeb.DashboardLive do
   # FIXME: show 'forfeit' on in-progress games;
   # FIXME: optionally show pending games to public
   # FIXME: invite user in game view
+  # FIXME: look into LiveComponent and preload to split the games into multiple lists
   use Phoenix.LiveView, layout: {ScrabbleExWeb.LayoutView, "live.html"}
   require Logger
 
@@ -99,6 +100,7 @@ defmodule ScrabbleExWeb.DashboardLive do
 
   defp to_game_meta(game_name) when is_binary(game_name) do
     # FIXME: avoid doing two calls?
+    # FIXME: don't need to start a game server for these
     ScrabbleEx.GameServer.find_or_start_game(game_name)
     ScrabbleEx.GameServer.get(game_name, &to_game_meta/1)
   end

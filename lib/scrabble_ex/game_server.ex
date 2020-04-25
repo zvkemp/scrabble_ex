@@ -148,6 +148,7 @@ defmodule ScrabbleEx.GameServer do
     # FIXME: use PubSub to handle both of these
     ScrabbleEx.InvitationBroker.player_joined(name, user.username)
     ScrabbleExWeb.Endpoint.broadcast("user_dashboard:#{user.id}", "game_joined", %{game_name: name, game_id: pkid})
+    ScrabbleExWeb.Endpoint.broadcast("game:#{name}", "player_joined", %{user: user})
   end
 
   def handle_info(:timeout, state) do

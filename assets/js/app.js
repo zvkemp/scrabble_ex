@@ -10,7 +10,7 @@ import css from "../css/app.css"
 // Import dependencies
 //
 import "phoenix_html"
-import socket from "./socket"
+// import socket from "./socket"
 import Scrabble from "./scrabble"
 import LiveSocket from "phoenix_live_view"
 import {Socket} from "phoenix"
@@ -18,7 +18,9 @@ import {Socket} from "phoenix"
 // Import local files
 //
 // Local files can be imported directly using relative paths, for example:
-if (document.querySelector('meta[name="id-token"]')) {
+let idToken = document.querySelector('meta[name="id-token"]');
+if (idToken) {
+  let socket = new Socket("/socket", {params: {token: idToken.getAttribute('content')}})
   socket.connect();
   const scrabble = new Scrabble(socket);
 }

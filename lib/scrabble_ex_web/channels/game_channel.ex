@@ -1,6 +1,7 @@
 defmodule ScrabbleExWeb.GameChannel do
   use Phoenix.Channel
   alias ScrabbleEx.Game
+  require Logger
   require ScrabbleExWeb.Presence
   alias ScrabbleExWeb.Presence
   import ScrabbleExWeb.Endpoint, only: [signing_salt: 0]
@@ -37,7 +38,9 @@ defmodule ScrabbleExWeb.GameChannel do
 
   def handle_info(:after_join, socket) do
     game = call(socket, :state)
-    broadcast!(socket, "player-state", %{game: game})
+    Logger.debug("after_join")
+    push(socket, "player-state", player_payload(socket, game))
+    # broadcast!(socket, "player-state", %{game: game})
     {:ok, presence_ref} = Presence.track(socket, socket.assigns.user_id, socket.assigns)
     {:noreply, assign(socket, :presence_ref, presence_ref)}
   end
@@ -183,7 +186,15 @@ defmodule ScrabbleExWeb.GameChannel do
     {:reply, {:error, %{message: msg}}, socket}
   end
 
-  intercept ["player-state", "presence_diff"]
+  intercept ["player-state", "presence_diff", "player_joined"]
+
+  def handle_out("player_joined", _user, socket) do
+    handle_out("player-state", socket)
+  end
+
+  def handle_out("player-state", socket) do
+    handle_out("player-state", %{game: call(socket, :state)}, socket)
+  end
 
   def handle_out("player-state", %Game{} = game, socket) do
     handle_out("player-state", %{game: game}, socket)
